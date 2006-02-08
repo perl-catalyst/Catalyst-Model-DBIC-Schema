@@ -37,9 +37,14 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
     # ->schema To access schema methods:
     $c->model('Foo')->schema->source(...);
 
-    # Shortcut to the schema resultset monikers for ->search et al:
-    $c->model('Foo::Bar')->search(...);
-    # is the same as $c->model('Foo')->schema->resultset('Bar')->search(...);
+    # certain ->schema methods (source, resultset, class) have shortcuts
+    $c->model('Foo')->source(...);
+    $c->model('Foo')->resultset(...);
+    $c->model('Foo')->class(...);
+
+    # For resultsets, there's an even quicker shortcut:
+    $c->model('Foo::Bar')
+    # is the same as $c->model('Foo')->resultset('Bar')
 
     # To get the composed schema for making new connections:
     my $newconn = $c->model('Foo')->composed_schema->connect(...);
@@ -98,12 +103,15 @@ Instantiates the Model based on the above-documented ->config parameters.
 =item schema
 
 Accessor which returns the connected schema being used by the this model.
+There are already direct shortcuts on the model class itself for
+schema->resultset, schema->source, and schema->class.
 
 =item composed_schema
 
 Accessor which returns the composed schema, which has no connection info,
 which was used in constructing the C<schema> above.  Useful for creating
-new connections based on the same schema/model.
+new connections based on the same schema/model.  There are direct shortcuts
+from the model object for composed_schema->clone and composed_schema->connect
 
 =item clone
 
@@ -112,6 +120,18 @@ Shortcut for ->composed_schema->clone
 =item connect
 
 Shortcut for ->composed_schema->connect
+
+=item source
+
+Shortcut for ->schema->source
+
+=item class
+
+Shortcut for ->schema->class
+
+=item resultset
+
+Shortcut for ->schema->resultset
 
 =back
 
@@ -144,7 +164,7 @@ sub new {
     foreach my $moniker ($self->schema->sources) {
         *{"${class}::${moniker}::ACCEPT_CONTEXT"} = sub {
             shift;
-            shift->model($model_name)->schema->resultset($moniker);
+            shift->model($model_name)->resultset($moniker);
         }
     }
 
