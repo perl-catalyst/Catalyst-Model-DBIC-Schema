@@ -1,0 +1,22 @@
+---
+name: Catalyst-Model-DBIC-Schema
+version: 0.01
+author:
+  - 'Brandon L Black, C<blblack@gmail.com>'
+abstract: DBIx::Class::Schema Model Class
+license: perl
+requires:
+  Catalyst: 5.64
+  Class::Accessor::Fast: 0
+  Class::Data::Accessor: 0
+  DBIx::Class: 0.05
+  UNIVERSAL::require: 0
+build_requires:
+  Test::More: 0.32
+provides:
+  Catalyst::Helper::Model::DBIC::Schema:
+    file: lib/Catalyst/Helper/Model/DBIC/Schema.pm
+  Catalyst::Model::DBIC::Schema:
+    file: lib/Catalyst/Model/DBIC/Schema.pm
+    version: 0.01
+generated_by: Module::Build version 0.2611

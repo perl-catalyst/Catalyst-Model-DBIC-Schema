@@ -1,0 +1,96 @@
+NAME
+    Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
+
+SYNOPSIS
+        package MyApp::Model::Foo;
+        use strict;
+        use base 'Catalyst::Model::DBIC::Schema';
+
+        __PACKAGE__->config(
+            schema_class => 'Foo::SchemaClass',
+            connect_info => [ 'dbi:Pg:dbname=foodb',
+                              'postgres',
+                              '',
+                              { AutoCommit => 1 },
+                            ],
+        );
+
+        1;
+
+        # In controller code:
+
+        # ->schema To access schema methods:
+        $c->model('Foo')->schema->source(...);
+
+        # Shortcut to the schema resultset monikers for ->search et al:
+        $c->model('Foo::Bar')->search(...);
+        # is the same as $c->model('Foo')->schema->resultset('Bar')->search(...);
+
+        # To get the composed schema for making new connections:
+        my $newconn = $c->model('Foo')->composed_schema->connect(...);
+
+        # Or the same thing via a convenience shortcut:
+        my $newconn = $c->model('Foo')->connect(...);
+
+        # or, if your schema works on different storage drivers:
+        my $newconn = $c->model('Foo')->composed_schema->clone();
+        $newconn->storage_type('::LDAP');
+        $newconn->connect(...);
+
+        # and again, a convenience shortcut
+        my $newconn = $c->model('Foo')->clone();
+        $newconn->storage_type('::LDAP');
+        $newconn->connect(...);
+
+DESCRIPTION
+    This is a Catalyst Model for DBIx::Class::Schema-based Models.
+
+CONFIG PARAMETERS
+    schema_class
+        This is the classname of your DBIx::Class::Schema Schema. It needs
+        to be findable in @INC, but it does not need to be underneath
+        "Catalyst::Model::".
+
+    connect_info
+        This is an arrayref of connection parameters, which are specific to
+        your "storage_type". For "::DBI", which is the only supported
+        "storage_type" in DBIx::Class at the time of this writing, the 4
+        parameters are your dsn, username, password, and connect options
+        hashref.
+
+    storage_type
+        Allows the use of a different "storage_type" than what is set in
+        your "schema_class" (which in turn defaults to "::DBI" if not set in
+        current DBIx::Class). Completely optional, and probably unneccesary
+        for most people, until other storage backends become available for
+        DBIx::Class.
+
+METHODS
+    new Instantiates the Model based on the above-documented ->config
+        parameters.
+
+    schema
+        Accessor which returns the connected schema being used by the this
+        model.
+
+    composed_schema
+        Accessor which returns the composed schema, which has no connection
+        info, which was used in constructing the "schema" above. Useful for
+        creating new connections based on the same schema/model.
+
+    clone
+        Shortcut for ->composed_schema->clone
+
+    connect
+        Shortcut for ->composed_schema->connect
+
+SEE ALSO
+    Catalyst, DBIx::Class, DBIx::Class::Schema, DBIx::Class::Schema::Loader
+
+AUTHOR
+    Brandon L Black, "blblack@gmail.com"
+
+COPYRIGHT
+    This program is free software, you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
