@@ -74,7 +74,7 @@ This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.
 
 This is the classname of your L<DBIx::Class::Schema> Schema.  It needs
 to be findable in C<@INC>, but it does not need to be underneath
-C<Catalyst::Model::>.
+C<Catalyst::Model::>.  This parameter is required.
 
 =item connect_info
 
@@ -82,6 +82,10 @@ This is an arrayref of connection parameters, which are specific to your
 C<storage_type>.  For C<::DBI>, which is the only supported C<storage_type>
 in L<DBIx::Class> at the time of this writing, the 4 parameters are your
 dsn, username, password, and connect options hashref.
+
+This is not required if C<schema_class> already has connection information
+defined in itself (which would be the case for a Schema defined by
+L<DBIx::Class::Schema::Loader>, for instance).
 
 =item storage_type
 
@@ -99,6 +103,9 @@ people, until other storage backends become available for L<DBIx::Class>.
 =item new
 
 Instantiates the Model based on the above-documented ->config parameters.
+The only required parameter is C<schema_class>.  C<connect_info> is
+required in the case that C<schema_class> does not already have connection
+information defined for it.
 
 =item schema
 
@@ -145,15 +152,23 @@ sub new {
     my $model_name = $class;
     $model_name =~ s/^[\w:]+::(?:Model|M):://;
 
-    foreach (qw/ connect_info schema_class /) {
-        croak "->config->{$_} must be defined for this model"
-            unless $self->{$_};
-    }
+    croak "->config->{schema_class} must be defined for this model"
+        unless $self->{schema_class};
 
     my $schema_class = $self->{schema_class};
 
     $schema_class->require
         or croak "Cannot load schema class '$schema_class': $@";
+
+    if( !$self->{connect_info} ) {
+        if($schema_class->storage && $schema_class->storage->connect_info) {
+            $self->{connect_info} = $schema_class->storage->connect_info;
+        }
+        else {
+            croak "Either ->config->{connect_info} must be defined for $class"
+                  . " or $schema_class must have connection defined on it";
+        }
+    }
 
     $self->composed_schema($schema_class->compose_namespace($class));
     $self->schema($self->composed_schema->clone);
@@ -171,10 +186,8 @@ sub new {
     return $self;
 }
 
-# convenience method
 sub clone { shift->composed_schema->clone(@_); }
 
-# convenience method
 sub connect { shift->composed_schema->connect(@_); }
 
 =head1 SEE ALSO

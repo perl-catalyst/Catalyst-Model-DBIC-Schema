@@ -22,9 +22,14 @@ SYNOPSIS
         # ->schema To access schema methods:
         $c->model('Foo')->schema->source(...);
 
-        # Shortcut to the schema resultset monikers for ->search et al:
-        $c->model('Foo::Bar')->search(...);
-        # is the same as $c->model('Foo')->schema->resultset('Bar')->search(...);
+        # certain ->schema methods (source, resultset, class) have shortcuts
+        $c->model('Foo')->source(...);
+        $c->model('Foo')->resultset(...);
+        $c->model('Foo')->class(...);
+
+        # For resultsets, there's an even quicker shortcut:
+        $c->model('Foo::Bar')
+        # is the same as $c->model('Foo')->resultset('Bar')
 
         # To get the composed schema for making new connections:
         my $newconn = $c->model('Foo')->composed_schema->connect(...);
@@ -49,7 +54,7 @@ CONFIG PARAMETERS
     schema_class
         This is the classname of your DBIx::Class::Schema Schema. It needs
         to be findable in @INC, but it does not need to be underneath
-        "Catalyst::Model::".
+        "Catalyst::Model::". This parameter is required.
 
     connect_info
         This is an arrayref of connection parameters, which are specific to
@@ -57,6 +62,10 @@ CONFIG PARAMETERS
         "storage_type" in DBIx::Class at the time of this writing, the 4
         parameters are your dsn, username, password, and connect options
         hashref.
+
+        This is not required if "schema_class" already has connection
+        information defined in itself (which would be the case for a Schema
+        defined by DBIx::Class::Schema::Loader, for instance).
 
     storage_type
         Allows the use of a different "storage_type" than what is set in
@@ -67,22 +76,36 @@ CONFIG PARAMETERS
 
 METHODS
     new Instantiates the Model based on the above-documented ->config
-        parameters.
+        parameters. The only required parameter is "schema_class".
+        "connect_info" is required in the case that "schema_class" does not
+        already have connection information defined for it.
 
     schema
         Accessor which returns the connected schema being used by the this
-        model.
+        model. There are already direct shortcuts on the model class itself
+        for schema->resultset, schema->source, and schema->class.
 
     composed_schema
         Accessor which returns the composed schema, which has no connection
         info, which was used in constructing the "schema" above. Useful for
-        creating new connections based on the same schema/model.
+        creating new connections based on the same schema/model. There are
+        direct shortcuts from the model object for composed_schema->clone
+        and composed_schema->connect
 
     clone
         Shortcut for ->composed_schema->clone
 
     connect
         Shortcut for ->composed_schema->connect
+
+    source
+        Shortcut for ->schema->source
+
+    class
+        Shortcut for ->schema->class
+
+    resultset
+        Shortcut for ->schema->resultset
 
 SEE ALSO
     Catalyst, DBIx::Class, DBIx::Class::Schema, DBIx::Class::Schema::Loader

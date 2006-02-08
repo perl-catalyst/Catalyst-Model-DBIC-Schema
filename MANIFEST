@@ -2,10 +2,10 @@ Build.PL
 Changes
 lib/Catalyst/Helper/Model/DBIC/Schema.pm
 lib/Catalyst/Model/DBIC/Schema.pm
+Makefile.PL
 MANIFEST			This list of files
+META.yml
+README
 t/01use.t
 t/02pod.t
 t/03podcoverage.t
-META.yml
-Makefile.PL
-README

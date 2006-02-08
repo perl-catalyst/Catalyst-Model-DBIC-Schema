@@ -1,6 +1,8 @@
 package Catalyst::Helper::Model::DBIC::Schema;
 
 use strict;
+use warnings;
+use Carp;
 
 =head1 NAME
 
@@ -8,7 +10,15 @@ Catalyst::Helper::Model::DBIC::Schema - Helper for DBIC Schema Models
 
 =head1 SYNOPSIS
 
-    script/create.pl model Foo DBIC::Schema Foo::SchemaClass dsn user password
+    script/create.pl model Foo DBIC::Schema Foo::SchemaClass [ dsn user password ]
+
+    Where:
+      Foo is the short name for the Model class being generated
+      Foo::SchemaClass is the fully qualified classname of your Schema,
+        which isa DBIx::Class::Schema defined elsewhere.
+      dsn, user, and password are optional if connection info is already
+        defined in your Schema class (as it would be in the case of
+        DBIx::Class::Schema::Loader).
 
 =head1 DESCRIPTION
 
@@ -21,11 +31,17 @@ Helper for the DBIC Plain Models.
 =cut
 
 sub mk_compclass {
-    my ( $self, $helper, $schemaclass, $dsn, $user, $pass ) = @_;
-    $helper->{schemaclass} = $schemaclass || '';
-    $helper->{dsn}         = $dsn  || '';
-    $helper->{user}        = $user || '';
-    $helper->{pass}        = $pass || '';
+    my ( $self, $helper, $schema_class, $dsn, $user, $pass ) = @_;
+
+    $helper->{schema_class} = $schema_class || '';
+
+    if(defined($dsn)) {
+        $helper->{setup_connect_info} = 1;
+        $helper->{dsn}         = $dsn  || '';
+        $helper->{user}        = $user || '';
+        $helper->{pass}        = $pass || '';
+    }
+
     my $file = $helper->{file};
     $helper->render_file( 'compclass', $file );
 }
@@ -57,7 +73,8 @@ use strict;
 use base 'Catalyst::Model::DBIC::Schema';
 
 __PACKAGE__->config(
-    schema_class => '[% schemaclass %]',
+    schema_class => '[% schema_class %]',
+    [% IF setup_connect_info %]
     connect_info => [ '[% dsn %]',
                       '[% user %]',
                       '[% pass %]',
@@ -69,6 +86,7 @@ __PACKAGE__->config(
                           AutoCommit         => 1,
                       }
                     ],
+    [% END %]
 );
 
 =head1 NAME
