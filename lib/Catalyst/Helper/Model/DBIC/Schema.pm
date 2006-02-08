@@ -46,6 +46,8 @@ it under the same terms as Perl itself.
 
 =cut
 
+1;
+
 __DATA__
 
 __compclass__
@@ -55,7 +57,7 @@ use strict;
 use base 'Catalyst::Model::DBIC::Schema';
 
 __PACKAGE__->config(
-    schema_class => '[% schemaclass %]
+    schema_class => '[% schemaclass %]',
     connect_info => [ '[% dsn %]',
                       '[% user %]',
                       '[% pass %]',
