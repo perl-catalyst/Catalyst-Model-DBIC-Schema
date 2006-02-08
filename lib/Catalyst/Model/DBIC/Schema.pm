@@ -1,14 +1,14 @@
 package Catalyst::Model::DBIC::Schema;
 
 use strict;
-use base qw/Catalyst::Base Class::Accessor::Fast Class::Data::Accessor/;
+use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
 use NEXT;
 use UNIVERSAL::require;
 use Carp;
 
 our $VERSION = '0.01';
 
-__PACKAGE__->mk_classdata('composed_schema');
+__PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
 
 =head1 NAME
