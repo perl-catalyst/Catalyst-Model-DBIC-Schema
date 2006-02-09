@@ -6,7 +6,7 @@ use NEXT;
 use UNIVERSAL::require;
 use Carp;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -145,8 +145,7 @@ Shortcut for ->schema->resultset
 =cut
 
 sub new {
-    my ( $self, $c ) = @_;
-    $self = $self->NEXT::new($c);
+    my $self = shift->NEXT::new(@_);
     
     my $class = ref($self);
     my $model_name = $class;
@@ -173,7 +172,7 @@ sub new {
     $self->composed_schema($schema_class->compose_namespace($class));
     $self->schema($self->composed_schema->clone);
     $self->schema->storage_type($self->{storage_type}) if $self->{storage_type};
-    $self->schema->connect(@{$self->{connect_info}});
+    $self->schema->connection(@{$self->{connect_info}});
 
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {

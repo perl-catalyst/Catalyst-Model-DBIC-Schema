@@ -1,6 +1,6 @@
 ---
 name: Catalyst-Model-DBIC-Schema
-version: 0.01
+version: 0.02
 author:
   - 'Brandon L Black, C<blblack@gmail.com>'
 abstract: DBIx::Class::Schema Model Class
@@ -18,5 +18,5 @@ provides:
     file: lib/Catalyst/Helper/Model/DBIC/Schema.pm
   Catalyst::Model::DBIC::Schema:
     file: lib/Catalyst/Model/DBIC/Schema.pm
-    version: 0.01
+    version: 0.02
 generated_by: Module::Build version 0.2611
