@@ -55,12 +55,12 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
     # or, if your schema works on different storage drivers:
     my $newconn = $c->model('Foo')->composed_schema->clone();
     $newconn->storage_type('::LDAP');
-    $newconn->connect(...);
+    $newconn->connection(...);
 
     # and again, a convenience shortcut
     my $newconn = $c->model('Foo')->clone();
     $newconn->storage_type('::LDAP');
-    $newconn->connect(...);
+    $newconn->connection(...);
 
 =head1 DESCRIPTION
 
