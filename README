@@ -40,15 +40,18 @@ SYNOPSIS
         # or, if your schema works on different storage drivers:
         my $newconn = $c->model('Foo')->composed_schema->clone();
         $newconn->storage_type('::LDAP');
-        $newconn->connect(...);
+        $newconn->connection(...);
 
         # and again, a convenience shortcut
         my $newconn = $c->model('Foo')->clone();
         $newconn->storage_type('::LDAP');
-        $newconn->connect(...);
+        $newconn->connection(...);
 
 DESCRIPTION
-    This is a Catalyst Model for DBIx::Class::Schema-based Models.
+    This is a Catalyst Model for DBIx::Class::Schema-based Models. See the
+    documentation for Catalyst::Helper::Model::DBIC::Schema and
+    Catalyst::Helper::Model::DBIC::SchemaInlineLoader for information on
+    generating these Models via Helper scripts.
 
 CONFIG PARAMETERS
     schema_class
@@ -108,7 +111,16 @@ METHODS
         Shortcut for ->schema->resultset
 
 SEE ALSO
-    Catalyst, DBIx::Class, DBIx::Class::Schema, DBIx::Class::Schema::Loader
+    General Catalyst Stuff:
+
+    Catalyst::Manual, Catalyst::Test, Catalyst::Request, Catalyst::Response,
+    Catalyst::Helper, Catalyst,
+
+    Stuff related to DBIC and this Model style:
+
+    DBIx::Class, DBIx::Class::Schema, DBIx::Class::Schema::Loader,
+    Catalyst::Helper::Model::DBIC::Schema,
+    Catalyst::Helper::Model::DBIC::SchemaInlineLoader
 
 AUTHOR
     Brandon L Black, "blblack@gmail.com"

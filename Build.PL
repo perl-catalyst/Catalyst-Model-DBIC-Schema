@@ -11,6 +11,9 @@ my %arguments = (
         'Class::Data::Accessor' => 0,
         'Class::Accessor::Fast' => 0,
     },
+    recommends         => {
+        'DBIx::Class::Schema::Loader' => '0.01004',
+    },
     build_requires     => {
         'Test::More'            => 0.32,
     },

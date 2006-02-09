@@ -23,3 +23,6 @@
 \.bak$
 \#$
 \b\.#
+
+# avoid dist files
+\.tar\.gz$

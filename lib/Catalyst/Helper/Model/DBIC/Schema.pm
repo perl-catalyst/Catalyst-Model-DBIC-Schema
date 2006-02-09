@@ -22,7 +22,7 @@ Catalyst::Helper::Model::DBIC::Schema - Helper for DBIC Schema Models
 
 =head1 DESCRIPTION
 
-Helper for the DBIC Plain Models.
+Helper for the DBIC Schema Models.
 
 =head2 METHODS
 
@@ -48,8 +48,16 @@ sub mk_compclass {
 
 =head1 SEE ALSO
 
+General Catalyst Stuff:
+
 L<Catalyst::Manual>, L<Catalyst::Test>, L<Catalyst::Request>,
-L<Catalyst::Response>, L<Catalyst::Helper>
+L<Catalyst::Response>, L<Catalyst::Helper>, L<Catalyst>,
+
+Stuff related to DBIC and this Model style:
+
+L<DBIx::Class>, L<DBIx::Class::Schema>,
+L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
+L<Catalyst::Helper::Model::DBIC::SchemaInlineLoader>
 
 =head1 AUTHOR
 

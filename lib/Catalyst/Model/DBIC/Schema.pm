@@ -4,9 +4,10 @@ use strict;
 use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
 use NEXT;
 use UNIVERSAL::require;
+use UNIVERSAL qw/ can /;
 use Carp;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -64,7 +65,10 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
 
 =head1 DESCRIPTION
 
-This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.
+This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.  See
+the documentation for L<Catalyst::Helper::Model::DBIC::Schema> and
+L<Catalyst::Helper::Model::DBIC::SchemaInlineLoader> for information
+on generating these Models via Helper scripts.
 
 =head1 CONFIG PARAMETERS
 
@@ -156,8 +160,11 @@ sub new {
 
     my $schema_class = $self->{schema_class};
 
-    $schema_class->require
-        or croak "Cannot load schema class '$schema_class': $@";
+    # don't require if the class is already loaded...
+    if( !can($schema_class, 'source') ) {
+        $schema_class->require
+            or croak "Cannot load schema class '$schema_class': $@";
+    }
 
     if( !$self->{connect_info} ) {
         if($schema_class->storage && $schema_class->storage->connect_info) {
@@ -191,8 +198,16 @@ sub connect { shift->composed_schema->connect(@_); }
 
 =head1 SEE ALSO
 
-L<Catalyst>, L<DBIx::Class>, L<DBIx::Class::Schema>,
-L<DBIx::Class::Schema::Loader>
+General Catalyst Stuff:
+
+L<Catalyst::Manual>, L<Catalyst::Test>, L<Catalyst::Request>,
+L<Catalyst::Response>, L<Catalyst::Helper>, L<Catalyst>,
+
+Stuff related to DBIC and this Model style:
+
+L<DBIx::Class>, L<DBIx::Class::Schema>,
+L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
+L<Catalyst::Helper::Model::DBIC::SchemaInlineLoader>
 
 =head1 AUTHOR
 

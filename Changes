@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.03  Not yet released
+        - YAS... added support for inline Schema::Loader via C::H::M::DBIC::SchemaInlineLoader
+
 0.02  Not yet released
         - Another snapshot
 
