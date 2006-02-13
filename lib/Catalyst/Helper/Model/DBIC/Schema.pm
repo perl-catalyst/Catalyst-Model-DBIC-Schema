@@ -56,8 +56,8 @@ L<Catalyst::Response>, L<Catalyst::Helper>, L<Catalyst>,
 Stuff related to DBIC and this Model style:
 
 L<DBIx::Class>, L<DBIx::Class::Schema>,
-L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
-L<Catalyst::Helper::Model::DBIC::SchemaInlineLoader>
+L<DBIx::Class::Schema::Loader>, L<Catalyst::Model::DBIC::Schema>,
+L<Catalyst::Helper::Model::DBIC::SchemaLoader>
 
 =head1 AUTHOR
 
@@ -99,7 +99,7 @@ __PACKAGE__->config(
 
 =head1 NAME
 
-[% class %] - Catalyst DBIC Plain Model
+[% class %] - Catalyst DBIC Schema Model
 
 =head1 SYNOPSIS
 
@@ -107,7 +107,8 @@ See L<[% app %]>
 
 =head1 DESCRIPTION
 
-Catalyst::Model::DBIC::Schema Model
+L<Catalyst::Model::DBIC::Schema> Model using schema
+L<[% schema_class %]>
 
 =head1 AUTHOR
 

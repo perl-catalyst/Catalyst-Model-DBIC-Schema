@@ -4,10 +4,9 @@ use strict;
 use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
 use NEXT;
 use UNIVERSAL::require;
-use UNIVERSAL qw/ can /;
 use Carp;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -65,10 +64,15 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
 
 =head1 DESCRIPTION
 
+NOTE: This is the first public release, there's probably a higher than
+average chance of random bugs and shortcomings: you've been warned.
+
 This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.  See
 the documentation for L<Catalyst::Helper::Model::DBIC::Schema> and
-L<Catalyst::Helper::Model::DBIC::SchemaInlineLoader> for information
-on generating these Models via Helper scripts.
+L<Catalyst::Helper::Model::DBIC::SchemaLoader> for information
+on generating these Models via Helper scripts.  The latter of the two
+will also generated a L<DBIx::Class::Schema::Loader>-based Schema class
+for you.
 
 =head1 CONFIG PARAMETERS
 
@@ -160,11 +164,8 @@ sub new {
 
     my $schema_class = $self->{schema_class};
 
-    # don't require if the class is already loaded...
-    if( !can($schema_class, 'source') ) {
-        $schema_class->require
-            or croak "Cannot load schema class '$schema_class': $@";
-    }
+    $schema_class->require
+        or croak "Cannot load schema class '$schema_class': $@";
 
     if( !$self->{connect_info} ) {
         if($schema_class->storage && $schema_class->storage->connect_info) {
@@ -172,7 +173,7 @@ sub new {
         }
         else {
             croak "Either ->config->{connect_info} must be defined for $class"
-                  . " or $schema_class must have connection defined on it";
+                  . " or $schema_class must have connect info defined on it";
         }
     }
 
@@ -207,7 +208,7 @@ Stuff related to DBIC and this Model style:
 
 L<DBIx::Class>, L<DBIx::Class::Schema>,
 L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
-L<Catalyst::Helper::Model::DBIC::SchemaInlineLoader>
+L<Catalyst::Helper::Model::DBIC::SchemaLoader>
 
 =head1 AUTHOR
 

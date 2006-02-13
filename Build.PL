@@ -7,12 +7,12 @@ my %arguments = (
     requires           => {
         'DBIx::Class'           => 0.05,
         'Catalyst'              => 5.64,
-        'UNIVERSAL::require'    => 0,
-        'Class::Data::Accessor' => 0,
-        'Class::Accessor::Fast' => 0,
+        'UNIVERSAL::require'    => 0.10,
+        'Class::Data::Accessor' => 0.02,
+        'Class::Accessor::Fast' => 0.22,
     },
     recommends         => {
-        'DBIx::Class::Schema::Loader' => '0.01004',
+        'DBIx::Class::Schema::Loader' => '0.02000',
     },
     build_requires     => {
         'Test::More'            => 0.32,
