@@ -1,4 +1,10 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.05  Fri Feb 17 20:52:21 UTC 2006
+        - Stop showing the template pod in pod tools and cpan,
+          per Gavin's email.
+        - Bump DBIx::Class pre-req to 0.05006, to prevent likely but
+          subtle issues under mod_perl engines.
+
 0.04  Mon Feb 13 04:22:49 UTC 2006
         - First public release

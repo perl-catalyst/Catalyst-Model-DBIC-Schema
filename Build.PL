@@ -5,14 +5,14 @@ my %arguments = (
     license            => 'perl',
     module_name        => 'Catalyst::Model::DBIC::Schema',
     requires           => {
-        'DBIx::Class'           => 0.05,
+        'DBIx::Class'           => 0.05006,
         'Catalyst'              => 5.64,
         'UNIVERSAL::require'    => 0.10,
         'Class::Data::Accessor' => 0.02,
         'Class::Accessor::Fast' => 0.22,
     },
     recommends         => {
-        'DBIx::Class::Schema::Loader' => '0.02000',
+        'DBIx::Class::Schema::Loader' => '0.02001',
     },
     build_requires     => {
         'Test::More'            => 0.32,

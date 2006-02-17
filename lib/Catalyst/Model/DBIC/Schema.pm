@@ -6,7 +6,7 @@ use NEXT;
 use UNIVERSAL::require;
 use Carp;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
