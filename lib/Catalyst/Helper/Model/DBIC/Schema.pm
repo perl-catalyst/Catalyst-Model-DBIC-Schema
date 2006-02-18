@@ -72,9 +72,9 @@ it under the same terms as Perl itself.
 
 1;
 
-=begin pod_to_ignore
-
 __DATA__
+
+=begin pod_to_ignore
 
 __compclass__
 package [% class %];

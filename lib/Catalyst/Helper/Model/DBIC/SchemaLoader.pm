@@ -87,9 +87,9 @@ it under the same terms as Perl itself.
 
 1;
 
-=begin pod_to_ignore
-
 __DATA__
+
+=begin pod_to_ignore
 
 __loaderclass__
 package [% loader_class %];
@@ -172,3 +172,4 @@ it under the same terms as Perl itself.
 =cut
 
 1;
+

@@ -1,5 +1,9 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.06  Sat Feb 18 19:05:17 UTC 2006
+        - Fix simple pod-related bug introduced in last rev
+        - Added optional test that uses the helpers
+
 0.05  Fri Feb 17 20:52:21 UTC 2006
         - Stop showing the template pod in pod tools and cpan,
           per Gavin's email.
