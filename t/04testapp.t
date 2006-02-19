@@ -9,8 +9,8 @@ plan skip_all => 'Enable this optional test with $ENV{C_M_DBIC_SCHEMA_TESTAPP}'
 
 my $test_params = [
     [ 'TestSchema', 'DBIC::Schema', '' ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', 'fakedsn fakeuser fakepass' ],
-    [ 'TestSchemaLoader', 'DBIC::SchemaLoader', 'fakedsn fakeuser fakepass' ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', q{fakedsn fakeuser fakepass '{ AutoCommit => 1 }'} ],
+    [ 'TestSchemaLoader', 'DBIC::SchemaLoader', q{fakedsn fakeuser fakepass '{ AutoCommit => 1 }'} ],
 ];
 
 plan tests => (2 * @$test_params);
@@ -28,7 +28,11 @@ chdir($cat_dir);
 
 foreach my $tparam (@$test_params) {
    my ($model, $helper, $args) = @$tparam;
-   system("$^X -I$blib_dir $creator model $model $helper $model $args");
+   my $model_two = $model;
+   if($helper =~ /Loader/) {
+       $model_two = '';
+   }
+   system("$^X -I$blib_dir $creator model $model $helper $model_two $args");
    my $model_path = File::Spec->catfile($model_dir, $model . '.pm');
    ok( -f $model_path, "$model_path is a file" );
    my $compile_rv = system("$^X -I$blib_dir -I$catlib_dir -c $model_path");

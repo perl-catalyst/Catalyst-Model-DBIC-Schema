@@ -1,5 +1,12 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.07  Sun Feb 19 21:50:18 UTC 2006
+        - bugfix for ::SchemaLoader::Foo password argument, and
+          switch to connect_info argument of new Schema::Loader
+        - Added ->require for source classes, so that you can
+          layer in lib/MyApp/Model/Foo/Bar.pm on top of the
+          generated MyApp::Model::Foo::Bar.
+
 0.06  Sat Feb 18 19:05:17 UTC 2006
         - Fix simple pod-related bug introduced in last rev
         - Added optional test that uses the helpers

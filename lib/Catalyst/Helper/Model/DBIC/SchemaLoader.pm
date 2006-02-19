@@ -10,11 +10,18 @@ Catalyst::Helper::Model::DBIC::SchemaLoader - Helper for AutoLoaded DBIC Schema 
 
 =head1 SYNOPSIS
 
-    script/myapp_create.pl model Foo DBIC::SchemaLoader dsn user password
+  script/myapp_create.pl model Foo DBIC::SchemaLoader [ connect info arguments ]
 
-    Where:
-      Foo is the short name for the Model class being generated
-      dsn, user, and password are the connection info
+  Where:
+    Foo is the short name for the Model class being generated
+    connect_info arguments are the same as what DBIx::Class::Schema::connect
+      expects, and are storage_type-specific.  For DBI-based storage, these
+      arguments are the dsn, username, password, and connect options,
+      respectively.
+
+=head1 TYPICAL EXAMPLE
+
+  script/myapp_create.pl model Foo DBIC::SchemaLoader dbi:mysql:foodb myuname mypass '{ AutoCommit => 1 }'
 
 =head1 DESCRIPTION
 
@@ -37,7 +44,11 @@ list for this package, but is not required for installation.
 =cut
 
 sub mk_compclass {
-    my ( $self, $helper, $dsn, $user, $pass ) = @_;
+    my ($self, $helper, @connect_info) = @_;
+
+    for(@connect_info) {
+        $_ = qq{'$_'} if $_ !~ /^\s*[[{]/;
+    }
 
     $helper->{loader_class} = $helper->{class};
     $helper->{loader_class} =~ s/\:\:M(?:odel)?\:\:/::SchemaLoader::/;
@@ -48,10 +59,7 @@ sub mk_compclass {
     my $loader_file = File::Spec->catfile( $loader_dir, $loader_file_part . '.pm' );
 
     $helper->mk_dir($loader_dir);
-
-    $helper->{dsn}          = $dsn  || '';
-    $helper->{user}         = $user || '';
-    $helper->{pass}         = $pass || '';
+    $helper->{connect_info} = \@connect_info;
 
     $helper->mk_dir( $loader_dir );
     $helper->render_file( 'loaderclass', $loader_file );
@@ -98,16 +106,10 @@ use strict;
 use base qw/DBIx::Class::Schema::Loader/;
 
 __PACKAGE__->load_from_connection(
-    dsn     => '[% dsn %]',
-    user    => '[% user %]',
-    pass    => '[% pass %]',
-    options => {
-                  RaiseError         => 1,
-                  PrintError         => 0,
-                  ShowErrorStatement => 1,
-                  TraceLevel         => 0,
-                  AutoCommit         => 1,
-                },
+    connect_info => [
+        [% FOREACH arg = connect_info %][% arg %],
+        [% END %]
+    ],
     relationships => 1,
     # debug => 1,
 );
