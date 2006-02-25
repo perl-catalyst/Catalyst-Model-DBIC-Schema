@@ -12,7 +12,7 @@ requires:
   DBIx::Class: 0.05006
   UNIVERSAL::require: 0.1
 recommends:
-  DBIx::Class::Schema::Loader: 0.02001
+  DBIx::Class::Schema::Loader: 0.02003
 build_requires:
   Test::More: 0.32
 provides:

@@ -12,7 +12,7 @@ my %arguments = (
         'Class::Accessor::Fast' => 0.22,
     },
     recommends         => {
-        'DBIx::Class::Schema::Loader' => '0.02001',
+        'DBIx::Class::Schema::Loader' => '0.02003',
     },
     build_requires     => {
         'Test::More'            => 0.32,
