@@ -6,7 +6,7 @@ use NEXT;
 use UNIVERSAL::require;
 use Carp;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -185,12 +185,6 @@ sub new {
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {
         my $classname = "${class}::$moniker";
-	$classname->require;
-        if($@ && $@ !~ /^Can't locate /) {
-            croak "Failed to load external class definition"
-                  . "for '$classname': $@";
-        }
-
         *{"${classname}::ACCEPT_CONTEXT"} = sub {
             shift;
             shift->model($model_name)->resultset($moniker);
