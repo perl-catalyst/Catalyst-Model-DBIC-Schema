@@ -6,7 +6,7 @@ use NEXT;
 use UNIVERSAL::require;
 use Carp;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -99,8 +99,8 @@ L<DBIx::Class::Schema::Loader>, for instance).
 
 Allows the use of a different C<storage_type> than what is set in your
 C<schema_class> (which in turn defaults to C<::DBI> if not set in current
-L<DBIx::Class>).  Completely optional, and probably unneccesary for most
-people, until other storage backends become available for L<DBIx::Class>.
+L<DBIx::Class>).  Completely optional, and probably unnecessary for most
+people until other storage backends become available for L<DBIx::Class>.
 
 =back
 
@@ -147,6 +147,11 @@ Shortcut for ->schema->class
 =item resultset
 
 Shortcut for ->schema->resultset
+
+=item storage
+
+Provides an accessor for the connected schema's storage object.
+Used often for debugging and controlling transactions.
 
 =back
 
@@ -197,6 +202,8 @@ sub new {
 sub clone { shift->composed_schema->clone(@_); }
 
 sub connect { shift->composed_schema->connect(@_); }
+
+sub storage { shift->schema->storage(@_); }
 
 =head1 SEE ALSO
 

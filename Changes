@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.09  Not released yet
+        - Added convenience method for ->schema->storage from paulm
+
 0.08  Tue Feb 28 00:04:16 UTC 2006
         - Bumped D::C::Schema::Loader recommendation to 0.02003
           (should have been done last release)

@@ -77,8 +77,8 @@ CONFIG PARAMETERS
     storage_type
         Allows the use of a different "storage_type" than what is set in
         your "schema_class" (which in turn defaults to "::DBI" if not set in
-        current DBIx::Class). Completely optional, and probably unneccesary
-        for most people, until other storage backends become available for
+        current DBIx::Class). Completely optional, and probably unnecessary
+        for most people until other storage backends become available for
         DBIx::Class.
 
 METHODS
@@ -113,6 +113,10 @@ METHODS
 
     resultset
         Shortcut for ->schema->resultset
+
+    storage
+        Provides an accessor for the connected schema's storage object. Used
+        often for debugging and controlling transactions.
 
 SEE ALSO
     General Catalyst Stuff:
