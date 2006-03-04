@@ -6,7 +6,7 @@ use NEXT;
 use UNIVERSAL::require;
 use Carp;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -63,9 +63,6 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
     $newconn->connection(...);
 
 =head1 DESCRIPTION
-
-NOTE: This is the first public release, there's probably a higher than
-average chance of random bugs and shortcomings: you've been warned.
 
 This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.  See
 the documentation for L<Catalyst::Helper::Model::DBIC::Schema> and

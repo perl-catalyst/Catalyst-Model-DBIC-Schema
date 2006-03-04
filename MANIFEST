@@ -10,4 +10,5 @@ README
 t/01use.t
 t/02pod.t
 t/03podcoverage.t
-t/04testapp.t
+t/04kwalitee.t
+t/05testapp.t
