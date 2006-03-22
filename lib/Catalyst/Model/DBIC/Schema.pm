@@ -22,12 +22,13 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
     use base 'Catalyst::Model::DBIC::Schema';
 
     __PACKAGE__->config(
-        schema_class => 'Foo::SchemaClass',
-        connect_info => [ 'dbi:Pg:dbname=foodb',
-                          'postgres',
-                          '',
-                          { AutoCommit => 1 },
-                        ],
+        schema_class    => 'Foo::SchemaClass',
+        connect_info    => [ 'dbi:Pg:dbname=foodb',
+                             'postgres',
+                             '',
+                             { AutoCommit => 1 },
+                           ],
+        on_connect_do   => [ 'sql statement 1', 'sql statement 2' ],
     );
 
     1;
@@ -91,6 +92,11 @@ dsn, username, password, and connect options hashref.
 This is not required if C<schema_class> already has connection information
 defined in itself (which would be the case for a Schema defined by
 L<DBIx::Class::Schema::Loader>, for instance).
+
+=item on_connect_do
+
+This is an arrayref of sql statements, which are executed on every connect.
+May not be a valid/useful argument with non-DBI-based Storages.
 
 =item storage_type
 
@@ -181,8 +187,12 @@ sub new {
 
     $self->composed_schema($schema_class->compose_namespace($class));
     $self->schema($self->composed_schema->clone);
-    $self->schema->storage_type($self->{storage_type}) if $self->{storage_type};
+
+    $self->schema->storage_type($self->{storage_type})
+        if $self->{storage_type};
     $self->schema->connection(@{$self->{connect_info}});
+    $self->schema->storage->on_connect_do($self->{on_connect_do})
+        if $self->{on_connect_do};
 
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {

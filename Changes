@@ -1,6 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
-0.09  Not released yet
+0.10  Wed Mar 22 07:06:02 UTC 2006
+        - Added on_connect_do config setting
         - Added convenience method for ->schema->storage from paulm
 
 0.08  Tue Feb 28 00:04:16 UTC 2006
