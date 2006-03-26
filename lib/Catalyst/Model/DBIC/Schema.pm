@@ -5,6 +5,7 @@ use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
 use NEXT;
 use UNIVERSAL::require;
 use Carp;
+require DBIx::Class;
 
 our $VERSION = '0.11';
 
@@ -92,13 +93,46 @@ C<Catalyst::Model::>.  This parameter is required.
 =item connect_info
 
 This is an arrayref of connection parameters, which are specific to your
-C<storage_type>.  For C<::DBI>, which is the only supported C<storage_type>
-in L<DBIx::Class> at the time of this writing, the 4 parameters are your
-dsn, username, password, and connect options hashref.
+C<storage_type> (see your storage type documentation for more details).
 
 This is not required if C<schema_class> already has connection information
 defined in itself (which would be the case for a Schema defined by
 L<DBIx::Class::Schema::Loader>, for instance).
+
+For L<DBIx::Class::Storage::DBI>, which is the only supported
+C<storage_type> in L<DBIx::Class> at the time of this writing, the
+parameters are your dsn, username, password, and connect options hashref.
+
+If you need to specify the L<DBIx::Class::Storage::DBI> specific parameter
+C<on_connect_do>, or the related C<sql_maker> options C<limit_dialect>,
+C<quote_char>, or C<name_sep>, you can place these options into a hashref
+as the final element of the C<connect_info> arrayref.  If in doubt, don't
+specify these options.  You would know it if you needed them.
+
+Examples:
+
+    connect_info => [ 'dbi:Pg:dbname=mypgdb', 'postgres', '' ],
+    connect_info => [
+                      'dbi:SQLite:dbname=foo.db',
+                      {
+                        on_connect_do => [
+                          'some SQL statement',
+                          'another SQL statement',
+                        ],
+                      }
+                    ],
+    connect_info => [
+                      'dbi:Pg:dbname=mypgdb',
+                      'postgres',
+                      '',
+                      { AutoCommit => 0 },
+                      {
+                        on_connect_do => [
+                          'some SQL statement',
+                          'another SQL statement',
+                        ],
+                      }
+                    ],
 
 =item storage_type
 
@@ -192,26 +226,51 @@ sub new {
 
     $self->schema->storage_type($self->{storage_type})
         if $self->{storage_type};
-    $self->schema->connection(@{$self->{connect_info}});
 
-    # This is temporary, until DBIx::Class supports the same syntax and we
-    #  switch our requisite to that version somewhere down the line.
-    my $last_info = $self->{connect_info}->[-1];
-    if(ref $last_info eq 'HASH') {
-        if(my $on_connect_do = $last_info->{on_connect_do}) {
-            $self->schema->storage->on_connect_do($self->{on_connect_do});
-        }
-        foreach my $sql_maker_opt (qw/limit_dialect quote_char name_sep/) {
-            if(my $opt_val = $last_info->{$sql_maker_opt}) {
-                $self->schema->storage->sql_maker->$sql_maker_opt($opt_val);
+    # XXX This is temporary, until DBIx::Class::Storage::DBI supports the
+    #  same syntax and we switch our requisite to that version somewhere
+    #  down the line.  This syntax is already committed into DBIx::Class
+    #  dev branch post-0.06.
+    # At that time, this whole block can revert back to just being:
+    #  $self->schema->connection(@{$self->{connect_info}});
+    
+    my $connect_info = [ @{$self->{connect_info}} ];
+    my ($on_connect_do, %sql_maker_opts);
+    if($DBIx::Class::VERSION < 0.069) {
+        my $used;
+        my $last_info = $self->{connect_info}->[-1];
+        if(ref $last_info eq 'HASH') {
+            if($on_connect_do = $last_info->{on_connect_do}) {
+              $used = 1;
             }
+            for my $sql_maker_opt (qw/limit_dialect quote_char name_sep/) {
+              if(my $opt_val = $last_info->{$sql_maker_opt}) {
+                $used = 1;
+                $sql_maker_opts{$sql_maker_opt} = $opt_val;
+              }
+            }
+            pop(@$connect_info) if $used;
         }
     }
+
+    $self->schema->connection(@$connect_info);
+
+    if($DBIx::Class::VERSION < 0.069) {
+        $self->schema->storage->on_connect_do($on_connect_do)
+            if $on_connect_do;
+        foreach my $sql_maker_opt (keys %sql_maker_opts) {
+            $self->schema->storage->sql_maker->$sql_maker_opt(
+                $sql_maker_opts{$sql_maker_opt}
+            );
+        }
+    }
+
+    # XXX end of compatibility block referenced above
 
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {
         my $classname = "${class}::$moniker";
-        *{"${classname}::COMPONENT"} = sub {
+        *{"${classname}::ACCEPT_CONTEXT"} = sub {
             shift;
             shift->model($model_name)->resultset($moniker);
         }
