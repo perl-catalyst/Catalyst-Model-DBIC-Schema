@@ -1,5 +1,13 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.11  Not yet released
+        - Removed on_connect_do config setting
+        - Support for on_connect_do and sql_maker options as part
+          of connect_info in the same way DBIx::Class will, with
+          compat for current DBIx::Class
+        - Changed resultset shortcuts to use COMPONENT instead of
+	  ACCEPT_CONTEXT, should be more efficient.
+
 0.10  Wed Mar 22 07:06:02 UTC 2006
         - Added on_connect_do config setting
         - Added convenience method for ->schema->storage from paulm

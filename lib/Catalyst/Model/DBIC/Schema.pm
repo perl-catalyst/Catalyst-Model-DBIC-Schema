@@ -6,7 +6,7 @@ use NEXT;
 use UNIVERSAL::require;
 use Carp;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -27,8 +27,15 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
                              'postgres',
                              '',
                              { AutoCommit => 1 },
+                             { limit_dialect => 'xxx',
+                               quote_char => q{`},
+                               name_sep => q{@},
+                               on_connect_do => [
+                                   'sql statement 1',
+                                   'sql statement 2',
+                               ]
+                             }
                            ],
-        on_connect_do   => [ 'sql statement 1', 'sql statement 2' ],
     );
 
     1;
@@ -92,11 +99,6 @@ dsn, username, password, and connect options hashref.
 This is not required if C<schema_class> already has connection information
 defined in itself (which would be the case for a Schema defined by
 L<DBIx::Class::Schema::Loader>, for instance).
-
-=item on_connect_do
-
-This is an arrayref of sql statements, which are executed on every connect.
-May not be a valid/useful argument with non-DBI-based Storages.
 
 =item storage_type
 
@@ -191,13 +193,25 @@ sub new {
     $self->schema->storage_type($self->{storage_type})
         if $self->{storage_type};
     $self->schema->connection(@{$self->{connect_info}});
-    $self->schema->storage->on_connect_do($self->{on_connect_do})
-        if $self->{on_connect_do};
+
+    # This is temporary, until DBIx::Class supports the same syntax and we
+    #  switch our requisite to that version somewhere down the line.
+    my $last_info = $self->{connect_info}->[-1];
+    if(ref $last_info eq 'HASH') {
+        if(my $on_connect_do = $last_info->{on_connect_do}) {
+            $self->schema->storage->on_connect_do($self->{on_connect_do});
+        }
+        foreach my $sql_maker_opt (qw/limit_dialect quote_char name_sep/) {
+            if(my $opt_val = $last_info->{$sql_maker_opt}) {
+                $self->schema->storage->sql_maker->$sql_maker_opt($opt_val);
+            }
+        }
+    }
 
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {
         my $classname = "${class}::$moniker";
-        *{"${classname}::ACCEPT_CONTEXT"} = sub {
+        *{"${classname}::COMPONENT"} = sub {
             shift;
             shift->model($model_name)->resultset($moniker);
         }
