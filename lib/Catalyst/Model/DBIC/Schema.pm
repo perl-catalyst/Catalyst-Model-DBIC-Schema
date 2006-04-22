@@ -18,56 +18,119 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
 
 =head1 SYNOPSIS
 
-    package MyApp::Model::Foo;
-    use strict;
-    use base 'Catalyst::Model::DBIC::Schema';
+Manual creation of a DBIx::Class::Schema and a Catalyst::Model::DBIC::Schema:
 
-    __PACKAGE__->config(
-        schema_class    => 'Foo::SchemaClass',
-        connect_info    => [ 'dbi:Pg:dbname=foodb',
-                             'postgres',
-                             '',
-                             { AutoCommit => 1 },
-                             { limit_dialect => 'xxx',
-                               quote_char => q{`},
-                               name_sep => q{@},
-                               on_connect_do => [
-                                   'sql statement 1',
-                                   'sql statement 2',
-                               ]
-                             }
-                           ],
-    );
+=over
 
-    1;
+=item 1.
 
-    # In controller code:
+Create the DBIx:Class schema in MyApp/Schema/FilmDB.pm:
 
-    # ->schema To access schema methods:
-    $c->model('Foo')->schema->source(...);
+  package MyApp::Schema::FilmDB;
+  use base qw/DBIx::Class::Schema/;
 
-    # certain ->schema methods (source, resultset, class) have shortcuts
-    $c->model('Foo')->source(...);
-    $c->model('Foo')->resultset(...);
-    $c->model('Foo')->class(...);
+  __PACKAGE__->load_classes(qw/Actor Role/);
+
+=item 2.
+
+Create some classes for the tables in the database, for example an 
+Actor in MyApp/Schema/FilmDB/Actor.pm:
+
+  package MyApp::Schema::FilmDB::Actor;
+  use base qw/DBIx::Class/
+  
+  __PACKAGE__->load_components(qw/Core/);
+  __PACKAGE__->table('actor');
+  
+  ...
+
+and a Role in MyApp/Schema/Role.pm:
+
+  package MyApp::Schema::FilmDB::Role;
+  use base qw/DBIx::Class/
+  
+  __PACKAGE__->load_components(qw/Core/);
+  __PACKAGE__->table('actor');
+  
+  ...    
+
+Notice that the schema is in MyApp::Schema, not in MyApp::Model. This way it's 
+usable as a standalone module and you can test/run it without Catalyst. 
+
+=item 3.
+
+To expose it to Catalyst as a model, you should create a DBIC Model in
+MyApp/Model/FilmDB.pm:
+
+  package MyApp::Model::FilmDB;
+  use base qw/Catalyst::Model::DBIC::Schema/;
+  
+  __PACKAGE__->config(
+      schema_class => 'MyApp::Schema::FilmDB',
+      connect_info => [
+                        "DBI:...",
+                        "username",
+                        "password",
+                        {AutoCommit => 1}
+                      ]
+  );
+
+See below for a full list of the possible config parameters.
+
+=back
+
+Now you have a working Model, accessing your separate DBIC Schema. Which can
+be used/accessed in the normal Catalyst manner, via $c->model():
+
+  my $actor = $c->model('FilmDB::Actor')->find(1);
+
+You can also use it to set up DBIC authentication with 
+Authentication::Store::DBIC in MyApp.pm:
+
+  package MyApp;
+  
+  use Catalyst qw/... Authentication::Store::DBIC/;
+  
+  ...
+  
+  __PACKAGE__->config->{authentication}{dbic} = {
+      user_class      => 'FilmDB::Actor',
+      user_field      => 'name',
+      password_field  => 'password'
+  }
+
+C<< $c->model() >> returns a L<DBIx::Class::ResultSet> for the source name
+parameter passed. To find out more about which methods can be called on a
+ResultSet, or how to add your own methods to it, please see the ResultSet
+documentation in the L<DBIx::Class> distribution.
+
+Some examples are given below:
+
+    # to access schema methods directly:
+    $c->model('FilmDB')->schema->source(...);
+
+    # to access the source object, resultset, and class:
+    $c->model('FilmDB')->source(...);
+    $c->model('FilmDB')->resultset(...);
+    $c->model('FilmDB')->class(...);
 
     # For resultsets, there's an even quicker shortcut:
-    $c->model('Foo::Bar')
-    # is the same as $c->model('Foo')->resultset('Bar')
+    $c->model('FilmDB::Acot')
+    # is the same as $c->model('FilmDB')->resultset('Actor')
 
     # To get the composed schema for making new connections:
-    my $newconn = $c->model('Foo')->composed_schema->connect(...);
+    my $newconn = $c->model('FilmDB')->composed_schema->connect(...);
 
     # Or the same thing via a convenience shortcut:
-    my $newconn = $c->model('Foo')->connect(...);
+    my $newconn = $c->model('FilmDB')->connect(...);
 
     # or, if your schema works on different storage drivers:
-    my $newconn = $c->model('Foo')->composed_schema->clone();
+    my $newconn = $c->model('FilmDB')->composed_schema->clone();
     $newconn->storage_type('::LDAP');
     $newconn->connection(...);
 
     # and again, a convenience shortcut
-    my $newconn = $c->model('Foo')->clone();
+    my $newconn = $c->model('FilmDB')->clone();
     $newconn->storage_type('::LDAP');
     $newconn->connection(...);
 
@@ -87,8 +150,8 @@ for you.
 =item schema_class
 
 This is the classname of your L<DBIx::Class::Schema> Schema.  It needs
-to be findable in C<@INC>, but it does not need to be underneath
-C<Catalyst::Model::>.  This parameter is required.
+to be findable in C<@INC>, but it does not need to be inside the 
+C<Catalyst::Model::> namespace.  This parameter is required.
 
 =item connect_info
 
@@ -112,15 +175,16 @@ specify these options.  You would know it if you needed them.
 Examples:
 
     connect_info => [ 'dbi:Pg:dbname=mypgdb', 'postgres', '' ],
+
     connect_info => [
                       'dbi:SQLite:dbname=foo.db',
                       {
                         on_connect_do => [
-                          'some SQL statement',
-                          'another SQL statement',
+                          'PRAGMA synchronous = OFF',
                         ],
                       }
                     ],
+
     connect_info => [
                       'dbi:Pg:dbname=mypgdb',
                       'postgres',
@@ -157,7 +221,7 @@ information defined for it.
 =item schema
 
 Accessor which returns the connected schema being used by the this model.
-There are already direct shortcuts on the model class itself for
+There are direct shortcuts on the model class itself for
 schema->resultset, schema->source, and schema->class.
 
 =item composed_schema
