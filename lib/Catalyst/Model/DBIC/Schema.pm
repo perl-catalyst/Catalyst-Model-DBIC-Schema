@@ -7,7 +7,7 @@ use UNIVERSAL::require;
 use Carp;
 require DBIx::Class;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -115,7 +115,7 @@ Some examples are given below:
     $c->model('FilmDB')->class(...);
 
     # For resultsets, there's an even quicker shortcut:
-    $c->model('FilmDB::Acot')
+    $c->model('FilmDB::Actor')
     # is the same as $c->model('FilmDB')->resultset('Actor')
 
     # To get the composed schema for making new connections:

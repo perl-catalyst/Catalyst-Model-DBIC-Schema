@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.12
+        - SYNOPSIS improved substantially to help newbies get started
+
 0.11  Sun Mar 26 17:22:31 UTC 2006
         - Removed on_connect_do config setting (it was only out
           in public for 4 days...).
