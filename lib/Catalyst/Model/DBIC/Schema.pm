@@ -50,7 +50,7 @@ and a Role in MyApp/Schema/Role.pm:
   use base qw/DBIx::Class/
   
   __PACKAGE__->load_components(qw/Core/);
-  __PACKAGE__->table('actor');
+  __PACKAGE__->table('role');
   
   ...    
 

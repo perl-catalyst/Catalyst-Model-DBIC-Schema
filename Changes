@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - fixed stupid typo in docs
+
 0.12
         - SYNOPSIS improved substantially to help newbies get started
 
