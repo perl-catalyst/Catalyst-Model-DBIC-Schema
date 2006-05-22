@@ -3,6 +3,7 @@ package Catalyst::Helper::Model::DBIC::Schema;
 use strict;
 use warnings;
 use Carp;
+use UNIVERSAL::require;
 
 =head1 NAME
 
@@ -102,8 +103,14 @@ sub mk_compclass {
         $helper->render_file( 'schemaclass', $schema_file );
     }
     elsif($create eq 'static') {
-       die "Unimplemented ...";
-       # XXX make a loader class in memory with dumpdir set to our base+lib, and load it.
+       my $schema_dir  = File::Spec->catfile( $helper->{base}, 'lib' );
+       DBIx::Class::Schema::Loader->use("dump_to_dir:$schema_dir", 'make_schema_at')
+           or die "Cannot load DBIx::Class::Schema::Loader: $@";
+       make_schema_at(
+           $schema_class,
+           { relationships => 1 },
+           \@connect_info,
+       );
     }
 }
 
