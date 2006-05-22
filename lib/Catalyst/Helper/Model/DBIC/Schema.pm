@@ -10,27 +10,57 @@ Catalyst::Helper::Model::DBIC::Schema - Helper for DBIC Schema Models
 
 =head1 SYNOPSIS
 
-  script/create.pl model Foo DBIC::Schema Foo::SchemaClass [ connect_info arguments ]
-
-  Where:
-    Foo is the short name for the Model class being generated
-    Foo::SchemaClass is the fully qualified classname of your Schema,
-      which isa DBIx::Class::Schema defined elsewhere.
-    connect_info arguments are the same as what DBIx::Class::Schema::connect
-      expects, and are storage_type-specific.  For DBI-based storage, these
-      arguments are the dsn, username, password, and connect options,
-      respectively.
-
-=head1 TYPICAL EXAMPLES
-
-  script/myapp_create.pl model Foo DBIC::Schema FooSchema dbi:mysql:foodb myuname mypass '{ AutoCommit => 1 }'
-
-  # -or, if the schema already has connection info and you want to re-use that:
-  script/myapp_create.pl model Foo DBIC::Schema FooSchema
+  script/create.pl model ModelName DBIC::Schema My::SchemaClass [ create=dynamic | create=static ] [ connect_info arguments ]
 
 =head1 DESCRIPTION
 
 Helper for the DBIC Schema Models.
+
+=head2 Arguments:
+
+    ModelName is the short name for the Model class being generated
+
+    My::SchemaClass is the fully qualified classname of your Schema,
+      which might or might not yet exist.
+
+    create=dynamic instructs this Helper to generate the named Schema
+      class for you, basing it on L<DBIx::Class::Schema::Loader> (which
+      means the table information will always be dynamically loaded at
+      runtime from the database).
+
+    create=static instructs this Helper to generate the named Schema
+      class for you, using L<DBIx::Class::Schema::Loader> in "one shot"
+      mode to create a standard, manually-defined L<DBIx::Class::Schema>
+      setup, based on what the Loader sees in your database at this moment.
+      A Schema/Model pair generated this way will not require
+      L<DBIx::Class::Schema::Loader> at runtime, and will not automatically
+      adapt itself to changes in your database structure.  You can edit
+      the generated classes by hand to refine them.
+      
+    connect_info arguments are the same as what DBIx::Class::Schema::connect
+      expects, and are storage_type-specific.  For DBI-based storage, these
+      arguments are the dsn, username, password, and connect options,
+      respectively.  These are optional for existing Schemas, but required
+      if you use either of the C<create=> options.
+
+Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
+
+=head1 TYPICAL EXAMPLES
+
+  # Use DBIx::Class::Schema::Loader to create a static DBIx::Class::Schema,
+  #  and a Model which references it:
+  script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass create=static dbi:mysql:foodb myuname mypass
+
+  # Create a dynamic DBIx::Class::Schema::Loader-based Schema,
+  #  and a Model which references it:
+  script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass create=dynamic dbi:mysql:foodb myuname mypass
+
+  # Reference an existing Schema of any kind, and provide some connection information for ->config:
+  script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass dbi:mysql:foodb myuname mypass
+
+  # Same, but don't supply connect information yet (you'll need to do this
+  #  in your app config, or [not recommended] in the schema itself).
+  script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass
 
 =head2 METHODS
 
@@ -41,7 +71,14 @@ Helper for the DBIC Schema Models.
 sub mk_compclass {
     my ( $self, $helper, $schema_class, @connect_info) = @_;
 
-    $helper->{schema_class} = $schema_class || '';
+    $helper->{schema_class} = $schema_class
+        or die "Must supply schema class name";
+
+    my $create = '';
+    if($connect_info[0] && $connect_info[0] =~ /^create=(dynamic|static)$/) {
+        $create = $1;
+        shift @connect_info;
+    }
 
     if(@connect_info) {
         $helper->{setup_connect_info} = 1;
@@ -53,6 +90,21 @@ sub mk_compclass {
 
     my $file = $helper->{file};
     $helper->render_file( 'compclass', $file );
+
+    if($create eq 'dynamic') {
+        my @schema_parts = split(/\:\:/, $helper->{schema_class});
+        my $schema_file_part = pop @schema_parts;
+
+        my $schema_dir  = File::Spec->catfile( $helper->{base}, 'lib', @schema_parts );
+        my $schema_file = File::Spec->catfile( $schema_dir, $schema_file_part . '.pm' );
+
+        $helper->mk_dir($schema_dir);
+        $helper->render_file( 'schemaclass', $schema_file );
+    }
+    elsif($create eq 'static') {
+       die "Unimplemented ...";
+       # XXX make a loader class in memory with dumpdir set to our base+lib, and load it.
+    }
 }
 
 =head1 SEE ALSO
@@ -85,6 +137,42 @@ __DATA__
 
 =begin pod_to_ignore
 
+__schemaclass__
+package [% schema_class %];
+
+use strict;
+use base qw/DBIx::Class::Schema::Loader/;
+
+__PACKAGE__->loader_options(
+    relationships => 1,
+    # debug => 1,
+);
+
+=head1 NAME
+
+[% schema_class %] - DBIx::Class::Schema::Loader class
+
+=head1 SYNOPSIS
+
+See L<[% app %]>
+
+=head1 DESCRIPTION
+
+Generated by L<Catalyst::Model::DBIC::Schema> for use in L<[% class %]>
+
+=head1 AUTHOR
+
+[% author %]
+
+=head1 LICENSE
+
+This library is free software, you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+1;
+
 __compclass__
 package [% class %];
 
@@ -102,15 +190,13 @@ __PACKAGE__->config(
 =head1 NAME
 
 [% class %] - Catalyst DBIC Schema Model
-
 =head1 SYNOPSIS
 
 See L<[% app %]>
 
 =head1 DESCRIPTION
 
-L<Catalyst::Model::DBIC::Schema> Model using schema
-L<[% schema_class %]>
+L<Catalyst::Model::DBIC::Schema> Model using schema L<[% schema_class %]>
 
 =head1 AUTHOR
 

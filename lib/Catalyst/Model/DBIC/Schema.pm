@@ -7,7 +7,7 @@ use UNIVERSAL::require;
 use Carp;
 require DBIx::Class;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -159,8 +159,7 @@ This is an arrayref of connection parameters, which are specific to your
 C<storage_type> (see your storage type documentation for more details).
 
 This is not required if C<schema_class> already has connection information
-defined in itself (which would be the case for a Schema defined by
-L<DBIx::Class::Schema::Loader>, for instance).
+defined inside itself (which isn't highly recommended, but can be done)
 
 For L<DBIx::Class::Storage::DBI>, which is the only supported
 C<storage_type> in L<DBIx::Class> at the time of this writing, the
@@ -294,7 +293,7 @@ sub new {
     # XXX This is temporary, until DBIx::Class::Storage::DBI supports the
     #  same syntax and we switch our requisite to that version somewhere
     #  down the line.  This syntax is already committed into DBIx::Class
-    #  dev branch post-0.06.
+    #  -current branch post-0.06.
     # At that time, this whole block can revert back to just being:
     #  $self->schema->connection(@{$self->{connect_info}});
     
