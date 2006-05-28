@@ -7,7 +7,7 @@ use UNIVERSAL::require;
 use Carp;
 require DBIx::Class;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
