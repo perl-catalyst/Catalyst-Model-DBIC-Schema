@@ -37,7 +37,7 @@ Helper for the DBIC Schema Models.
       L<DBIx::Class::Schema::Loader> at runtime, and will not automatically
       adapt itself to changes in your database structure.  You can edit
       the generated classes by hand to refine them.
-      
+
     connect_info arguments are the same as what DBIx::Class::Schema::connect
       expects, and are storage_type-specific.  For DBI-based storage, these
       arguments are the dsn, username, password, and connect options,

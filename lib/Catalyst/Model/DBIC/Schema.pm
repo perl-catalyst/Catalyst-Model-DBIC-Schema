@@ -38,20 +38,20 @@ Actor in MyApp/Schema/FilmDB/Actor.pm:
 
   package MyApp::Schema::FilmDB::Actor;
   use base qw/DBIx::Class/
-  
+
   __PACKAGE__->load_components(qw/Core/);
   __PACKAGE__->table('actor');
-  
+
   ...
 
 and a Role in MyApp/Schema/Role.pm:
 
   package MyApp::Schema::FilmDB::Role;
   use base qw/DBIx::Class/
-  
+
   __PACKAGE__->load_components(qw/Core/);
   __PACKAGE__->table('role');
-  
+
   ...    
 
 Notice that the schema is in MyApp::Schema, not in MyApp::Model. This way it's 
@@ -64,7 +64,7 @@ MyApp/Model/FilmDB.pm:
 
   package MyApp::Model::FilmDB;
   use base qw/Catalyst::Model::DBIC::Schema/;
-  
+
   __PACKAGE__->config(
       schema_class => 'MyApp::Schema::FilmDB',
       connect_info => [
@@ -88,11 +88,11 @@ You can also use it to set up DBIC authentication with
 Authentication::Store::DBIC in MyApp.pm:
 
   package MyApp;
-  
+
   use Catalyst qw/... Authentication::Store::DBIC/;
-  
+
   ...
-  
+
   __PACKAGE__->config->{authentication}{dbic} = {
       user_class      => 'FilmDB::Actor',
       user_field      => 'name',
@@ -106,33 +106,33 @@ documentation in the L<DBIx::Class> distribution.
 
 Some examples are given below:
 
-    # to access schema methods directly:
-    $c->model('FilmDB')->schema->source(...);
+  # to access schema methods directly:
+  $c->model('FilmDB')->schema->source(...);
 
-    # to access the source object, resultset, and class:
-    $c->model('FilmDB')->source(...);
-    $c->model('FilmDB')->resultset(...);
-    $c->model('FilmDB')->class(...);
+  # to access the source object, resultset, and class:
+  $c->model('FilmDB')->source(...);
+  $c->model('FilmDB')->resultset(...);
+  $c->model('FilmDB')->class(...);
 
-    # For resultsets, there's an even quicker shortcut:
-    $c->model('FilmDB::Actor')
-    # is the same as $c->model('FilmDB')->resultset('Actor')
+  # For resultsets, there's an even quicker shortcut:
+  $c->model('FilmDB::Actor')
+  # is the same as $c->model('FilmDB')->resultset('Actor')
 
-    # To get the composed schema for making new connections:
-    my $newconn = $c->model('FilmDB')->composed_schema->connect(...);
+  # To get the composed schema for making new connections:
+  my $newconn = $c->model('FilmDB')->composed_schema->connect(...);
 
-    # Or the same thing via a convenience shortcut:
-    my $newconn = $c->model('FilmDB')->connect(...);
+  # Or the same thing via a convenience shortcut:
+  my $newconn = $c->model('FilmDB')->connect(...);
 
-    # or, if your schema works on different storage drivers:
-    my $newconn = $c->model('FilmDB')->composed_schema->clone();
-    $newconn->storage_type('::LDAP');
-    $newconn->connection(...);
+  # or, if your schema works on different storage drivers:
+  my $newconn = $c->model('FilmDB')->composed_schema->clone();
+  $newconn->storage_type('::LDAP');
+  $newconn->connection(...);
 
-    # and again, a convenience shortcut
-    my $newconn = $c->model('FilmDB')->clone();
-    $newconn->storage_type('::LDAP');
-    $newconn->connection(...);
+  # and again, a convenience shortcut
+  my $newconn = $c->model('FilmDB')->clone();
+  $newconn->storage_type('::LDAP');
+  $newconn->connection(...);
 
 =head1 DESCRIPTION
 
@@ -173,29 +173,29 @@ specify these options.  You would know it if you needed them.
 
 Examples:
 
-    connect_info => [ 'dbi:Pg:dbname=mypgdb', 'postgres', '' ],
+  connect_info => [ 'dbi:Pg:dbname=mypgdb', 'postgres', '' ],
 
-    connect_info => [
-                      'dbi:SQLite:dbname=foo.db',
-                      {
-                        on_connect_do => [
-                          'PRAGMA synchronous = OFF',
-                        ],
-                      }
-                    ],
+  connect_info => [
+                    'dbi:SQLite:dbname=foo.db',
+                    {
+                      on_connect_do => [
+                        'PRAGMA synchronous = OFF',
+                      ],
+                    }
+                  ],
 
-    connect_info => [
-                      'dbi:Pg:dbname=mypgdb',
-                      'postgres',
-                      '',
-                      { AutoCommit => 0 },
-                      {
-                        on_connect_do => [
-                          'some SQL statement',
-                          'another SQL statement',
-                        ],
-                      }
-                    ],
+  connect_info => [
+                    'dbi:Pg:dbname=mypgdb',
+                    'postgres',
+                    '',
+                    { AutoCommit => 0 },
+                    {
+                      on_connect_do => [
+                        'some SQL statement',
+                        'another SQL statement',
+                      ],
+                    }
+                  ],
 
 =item storage_type
 
