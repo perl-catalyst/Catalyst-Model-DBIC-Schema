@@ -1,8 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
-0.14    Not yet released - do not release before Schema::Loader 0.0300x is out and slightly stabilized!!
+0.14  Not yet released - To be released with DBIx::Class::Schema::Loader 0.03001
         - Helpers merged, helper syntax changed
-        - Everything updated for Schema::Loader 0.03 support, including
+        - Everything updated for Schema::Loader 0.03001 support, including
           what amounts to using Loader in one-shot mode to generate
           a manual Schema with matching Model.
         - fixed stupid typo in docs
