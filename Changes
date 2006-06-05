@@ -1,6 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
-0.14  Not yet released - To be released with DBIx::Class::Schema::Loader 0.03001
+0.14  Mon Jun  5 23:34:35 UTC 2006
         - Helpers merged, helper syntax changed
         - Everything updated for Schema::Loader 0.03001 support, including
           what amounts to using Loader in one-shot mode to generate
