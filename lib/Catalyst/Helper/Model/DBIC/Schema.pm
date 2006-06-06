@@ -83,10 +83,11 @@ sub mk_compclass {
 
     if(@connect_info) {
         $helper->{setup_connect_info} = 1;
-        for(@connect_info) {
+        my @helper_connect_info = @connect_info;
+        for(@helper_connect_info) {
             $_ = qq{'$_'} if $_ !~ /^\s*[[{]/;
         }
-        $helper->{connect_info} = \@connect_info;
+        $helper->{connect_info} = \@helper_connect_info;
     }
 
     my $file = $helper->{file};
