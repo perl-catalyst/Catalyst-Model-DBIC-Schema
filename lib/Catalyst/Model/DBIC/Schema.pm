@@ -137,11 +137,8 @@ Some examples are given below:
 =head1 DESCRIPTION
 
 This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.  See
-the documentation for L<Catalyst::Helper::Model::DBIC::Schema> and
-L<Catalyst::Helper::Model::DBIC::SchemaLoader> for information
-on generating these Models via Helper scripts.  The latter of the two
-will also generated a L<DBIx::Class::Schema::Loader>-based Schema class
-for you.
+the documentation for L<Catalyst::Helper::Model::DBIC::Schema> for
+information on generating these Models via Helper scripts.
 
 =head1 CONFIG PARAMETERS
 
@@ -358,8 +355,7 @@ L<Catalyst::Response>, L<Catalyst::Helper>, L<Catalyst>,
 Stuff related to DBIC and this Model style:
 
 L<DBIx::Class>, L<DBIx::Class::Schema>,
-L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
-L<Catalyst::Helper::Model::DBIC::SchemaLoader>
+L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>
 
 =head1 AUTHOR
 

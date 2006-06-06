@@ -124,8 +124,7 @@ L<Catalyst::Response>, L<Catalyst::Helper>, L<Catalyst>,
 Stuff related to DBIC and this Model style:
 
 L<DBIx::Class>, L<DBIx::Class::Schema>,
-L<DBIx::Class::Schema::Loader>, L<Catalyst::Model::DBIC::Schema>,
-L<Catalyst::Helper::Model::DBIC::SchemaLoader>
+L<DBIx::Class::Schema::Loader>, L<Catalyst::Model::DBIC::Schema>
 
 =head1 AUTHOR
 
