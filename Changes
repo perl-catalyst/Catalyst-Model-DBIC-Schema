@@ -1,5 +1,11 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.15  Tue Jun  6 01:33:57 UTC 2006
+        - Fixed a serious bug in create=static usage
+        - Re-arranged output generation so that the more likely
+          failure to generate Schemas via create= will cause the
+          helper to abort before generating the Model class itself
+
 0.14  Mon Jun  5 23:34:35 UTC 2006
         - Helpers merged, helper syntax changed
         - Everything updated for Schema::Loader 0.03001 support, including

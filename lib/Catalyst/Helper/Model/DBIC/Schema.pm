@@ -90,9 +90,6 @@ sub mk_compclass {
         $helper->{connect_info} = \@helper_connect_info;
     }
 
-    my $file = $helper->{file};
-    $helper->render_file( 'compclass', $file );
-
     if($create eq 'dynamic') {
         my @schema_parts = split(/\:\:/, $helper->{schema_class});
         my $schema_file_part = pop @schema_parts;
@@ -113,6 +110,9 @@ sub mk_compclass {
            \@connect_info,
        );
     }
+
+    my $file = $helper->{file};
+    $helper->render_file( 'compclass', $file );
 }
 
 =head1 SEE ALSO
