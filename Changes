@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+	- Be more verbose when connection_info is not set.
+
 0.15  Tue Jun  6 01:33:57 UTC 2006
         - Fixed a serious bug in create=static usage
         - Re-arranged output generation so that the more likely
