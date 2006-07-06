@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.16  Thu Jul  6 13:28:45 UTC 2006
+        - Bugfix for create=static and connect_info coderef snippets
 	- Be more verbose when connection_info is not set.
 
 0.15  Tue Jun  6 01:33:57 UTC 2006
