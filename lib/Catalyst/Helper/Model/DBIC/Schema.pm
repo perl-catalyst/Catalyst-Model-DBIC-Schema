@@ -73,7 +73,7 @@ sub mk_compclass {
     my ( $self, $helper, $schema_class, @connect_info) = @_;
 
     $helper->{schema_class} = $schema_class
-        or die "Must supply schema class name";
+        or croak "Must supply schema class name";
 
     my $create = '';
     if($connect_info[0] && $connect_info[0] =~ /^create=(dynamic|static)$/) {
@@ -101,14 +101,25 @@ sub mk_compclass {
         $helper->render_file( 'schemaclass', $schema_file );
     }
     elsif($create eq 'static') {
-       my $schema_dir  = File::Spec->catfile( $helper->{base}, 'lib' );
-       DBIx::Class::Schema::Loader->use("dump_to_dir:$schema_dir", 'make_schema_at')
-           or die "Cannot load DBIx::Class::Schema::Loader: $@";
-       make_schema_at(
-           $schema_class,
-           { relationships => 1 },
-           \@connect_info,
-       );
+        my $schema_dir  = File::Spec->catfile( $helper->{base}, 'lib' );
+        DBIx::Class::Schema::Loader->use("dump_to_dir:$schema_dir", 'make_schema_at')
+            or croak "Cannot load DBIx::Class::Schema::Loader: $@";
+
+        my @loader_connect_info = @connect_info;
+        my $num = 6; # argument number on the commandline for "dbi:..."
+        for(@loader_connect_info) {
+            if(/^\s*[[{]/) {
+                $_ = eval "$_";
+                croak "Perl syntax error in commandline argument $num: $@" if $@;
+            }
+            $num++;
+        }
+
+        make_schema_at(
+            $schema_class,
+            { relationships => 1 },
+            \@loader_connect_info,
+        );
     }
 
     my $file = $helper->{file};
