@@ -1,7 +1,7 @@
 package Catalyst::Model::DBIC::Schema;
 
 use strict;
-use base qw/Catalyst::Model/;
+use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
 use NEXT;
 use UNIVERSAL::require;
 use Carp;
@@ -9,6 +9,9 @@ use Data::Dumper;
 require DBIx::Class;
 
 our $VERSION = '0.17_01';
+
+__PACKAGE__->mk_classaccessor('composed_schema');
+__PACKAGE__->mk_accessors('schema');
 
 =head1 NAME
 
@@ -104,15 +107,33 @@ documentation in the L<DBIx::Class> distribution.
 
 Some examples are given below:
 
-  # You can access schema-level methods directly from the top-level model:
+  # to access schema methods directly:
+  $c->model('FilmDB')->schema->source(...);
+
+  # to access the source object, resultset, and class:
   $c->model('FilmDB')->source(...);
   $c->model('FilmDB')->resultset(...);
   $c->model('FilmDB')->class(...);
-  $c->model('FilmDB')->any_other_schema_method(...);
 
   # For resultsets, there's an even quicker shortcut:
   $c->model('FilmDB::Actor')
   # is the same as $c->model('FilmDB')->resultset('Actor')
+
+  # To get the composed schema for making new connections:
+  my $newconn = $c->model('FilmDB')->composed_schema->connect(...);
+
+  # Or the same thing via a convenience shortcut:
+  my $newconn = $c->model('FilmDB')->connect(...);
+
+  # or, if your schema works on different storage drivers:
+  my $newconn = $c->model('FilmDB')->composed_schema->clone();
+  $newconn->storage_type('::LDAP');
+  $newconn->connection(...);
+
+  # and again, a convenience shortcut
+  my $newconn = $c->model('FilmDB')->clone();
+  $newconn->storage_type('::LDAP');
+  $newconn->connection(...);
 
 =head1 DESCRIPTION
 
@@ -142,7 +163,11 @@ For L<DBIx::Class::Storage::DBI>, which is the only supported
 C<storage_type> in L<DBIx::Class> at the time of this writing, the
 parameters are your dsn, username, password, and connect options hashref.
 
-See L<DBIx::Class::Storage::DBI/connect_info> for more details.
+If you need to specify the L<DBIx::Class::Storage::DBI> specific parameter
+C<on_connect_do>, or the related C<sql_maker> options C<limit_dialect>,
+C<quote_char>, or C<name_sep>, you can place these options into a hashref
+as the final element of the C<connect_info> arrayref.  If in doubt, don't
+specify these options.  You would know it if you needed them.
 
 Examples:
 
@@ -174,7 +199,8 @@ Examples:
 
 Allows the use of a different C<storage_type> than what is set in your
 C<schema_class> (which in turn defaults to C<::DBI> if not set in current
-L<DBIx::Class>).
+L<DBIx::Class>).  Completely optional, and probably unnecessary for most
+people until other storage backends become available for L<DBIx::Class>.
 
 =back
 
@@ -189,10 +215,43 @@ The only required parameter is C<schema_class>.  C<connect_info> is
 required in the case that C<schema_class> does not already have connection
 information defined for it.
 
-=item COMPONENT
+=item schema
 
-Tells the Catalyst component architecture that the encapsulated schema
-object is to be returned for $c->model calls for this model name.
+Accessor which returns the connected schema being used by the this model.
+There are direct shortcuts on the model class itself for
+schema->resultset, schema->source, and schema->class.
+
+=item composed_schema
+
+Accessor which returns the composed schema, which has no connection info,
+which was used in constructing the C<schema> above.  Useful for creating
+new connections based on the same schema/model.  There are direct shortcuts
+from the model object for composed_schema->clone and composed_schema->connect
+
+=item clone
+
+Shortcut for ->composed_schema->clone
+
+=item connect
+
+Shortcut for ->composed_schema->connect
+
+=item source
+
+Shortcut for ->schema->source
+
+=item class
+
+Shortcut for ->schema->class
+
+=item resultset
+
+Shortcut for ->schema->resultset
+
+=item storage
+
+Provides an accessor for the connected schema's storage object.
+Used often for debugging and controlling transactions.
 
 =back
 
@@ -211,25 +270,31 @@ sub new {
     my $schema_class = $self->{schema_class};
 
     $schema_class->require
-        or croak "Cannot load schema_class '$schema_class': $@";
+        or croak "Cannot load schema class '$schema_class': $@";
 
-    my $schema_obj = $schema_class->clone;
-    $schema_obj->storage_type($self->{storage_type}) if $self->{storage_type};
-    $schema_obj->connection(@{$self->{connect_info}}) if $self->{connect_info};
-
-    if(!$schema_obj->storage) {
-        croak "Either ->config->{connect_info} must be defined for $class"
-              . " or $schema_class must have connect info defined on it. "
-              . "Here's what we got:\n"
-              . Dumper($self);
+    if( !$self->{connect_info} ) {
+        if($schema_class->storage && $schema_class->storage->connect_info) {
+            $self->{connect_info} = $schema_class->storage->connect_info;
+        }
+        else {
+            croak "Either ->config->{connect_info} must be defined for $class"
+                  . " or $schema_class must have connect info defined on it"
+		  . "Here's what we got:\n"
+		  . Dumper($self);
+        }
     }
 
-    $self->{schema_obj} = $schema_obj;
+    $self->composed_schema($schema_class->compose_namespace($class));
+    $self->schema($self->composed_schema->clone);
 
+    $self->schema->storage_type($self->{storage_type})
+        if $self->{storage_type};
+
+    $self->schema->connection(@{$self->{connect_info}});
+    
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {
         my $classname = "${class}::$moniker";
-        # XXX -- Does this need to be dynamic, or can it be done w/ COMPONENT too?
         *{"${classname}::ACCEPT_CONTEXT"} = sub {
             shift;
             shift->model($model_name)->resultset($moniker);
@@ -239,7 +304,11 @@ sub new {
     return $self;
 }
 
-sub COMPONENT { shift->{schema_obj} }
+sub clone { shift->composed_schema->clone(@_); }
+
+sub connect { shift->composed_schema->connect(@_); }
+
+sub storage { shift->schema->storage(@_); }
 
 =head1 SEE ALSO
 

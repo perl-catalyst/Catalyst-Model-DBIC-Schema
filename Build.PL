@@ -6,12 +6,14 @@ my %arguments = (
     module_name        => 'Catalyst::Model::DBIC::Schema',
     requires           => {
         'DBIx::Class'           => 0.07000,
-        'Catalyst'              => 5.7001,
+        'Catalyst'              => 5.64,
         'UNIVERSAL::require'    => 0.10,
+        'Class::Data::Accessor' => 0.02,
+        'Class::Accessor::Fast' => 0.22,
     },
     recommends         => {
         'Catalyst::Devel'             => 1.0,
-        'DBIx::Class::Schema::Loader' => 0.03005,
+        'DBIx::Class::Schema::Loader' => 0.03006,
     },
     build_requires     => {
         'Test::More'            => 0.32,
