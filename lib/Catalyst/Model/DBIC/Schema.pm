@@ -8,7 +8,7 @@ use Carp;
 use Data::Dumper;
 require DBIx::Class;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');

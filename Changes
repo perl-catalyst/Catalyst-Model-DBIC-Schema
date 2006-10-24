@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.19  XXX Not yet released
+        - Fix for rt.cpan.org #22426
+
 0.18  Tue Aug  8 04:34:42 UTC 2006
         - Version bump for public release, no functional change
 

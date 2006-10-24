@@ -11,7 +11,7 @@ plan skip_all => 'Enable this optional test with $ENV{C_M_DBIC_SCHEMA_TESTAPP}'
 
 my $test_params = [
     [ 'TestSchema', 'DBIC::Schema', '' ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', q{fakedsn fakeuser fakepass '{ AutoCommit => 1 }'} ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', q{fakedsn fakeuser fakepass "{ AutoCommit => 1 }"} ],
 ];
 
 plan tests => (2 * @$test_params);
