@@ -11,7 +11,7 @@ Catalyst::Helper::Model::DBIC::Schema - Helper for DBIC Schema Models
 
 =head1 SYNOPSIS
 
-  script/create.pl model ModelName DBIC::Schema My::SchemaClass [ create=dynamic | create=static ] [ connect_info arguments ]
+  script/create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass [ create=dynamic | create=static ] [ connect_info arguments ]
 
 =head1 DESCRIPTION
 
@@ -19,30 +19,34 @@ Helper for the DBIC Schema Models.
 
 =head2 Arguments:
 
-    ModelName is the short name for the Model class being generated
+C< CatalystModelName > is the short name for the Catalyst Model class
+being generated (i.e. callable with C< $c->model >
 
-    My::SchemaClass is the fully qualified classname of your Schema,
-      which might or might not yet exist.
+C< MyApp::SchemaClass > is the fully qualified classname of your Schema,
+which might or might not yet exist.  Note that you should have a good
+reason to create this under a new global namespace, otherwise use an
+existing top level namespace for your schema class.
 
-    create=dynamic instructs this Helper to generate the named Schema
-      class for you, basing it on L<DBIx::Class::Schema::Loader> (which
-      means the table information will always be dynamically loaded at
-      runtime from the database).
+C< create=dynamic > instructs this Helper to generate the named Schema
+class for you, basing it on L<DBIx::Class::Schema::Loader> (which
+means the table information will always be dynamically loaded at
+runtime from the database).
 
-    create=static instructs this Helper to generate the named Schema
-      class for you, using L<DBIx::Class::Schema::Loader> in "one shot"
-      mode to create a standard, manually-defined L<DBIx::Class::Schema>
-      setup, based on what the Loader sees in your database at this moment.
-      A Schema/Model pair generated this way will not require
-      L<DBIx::Class::Schema::Loader> at runtime, and will not automatically
-      adapt itself to changes in your database structure.  You can edit
-      the generated classes by hand to refine them.
+C< create=static > instructs this Helper to generate the named Schema
+class for you, using L<DBIx::Class::Schema::Loader> in "one shot"
+mode to create a standard, manually-defined L<DBIx::Class::Schema>
+setup, based on what the Loader sees in your database at this moment.
+A Schema/Model pair generated this way will not require
+L<DBIx::Class::Schema::Loader> at runtime, and will not automatically
+adapt itself to changes in your database structure.  You can edit
+the generated classes by hand to refine them.
 
-    connect_info arguments are the same as what DBIx::Class::Schema::connect
-      expects, and are storage_type-specific.  For DBI-based storage, these
-      arguments are the dsn, username, password, and connect options,
-      respectively.  These are optional for existing Schemas, but required
-      if you use either of the C<create=> options.
+C< connect_info > arguments are the same as what
+DBIx::Class::Schema::connect expects, and are storage_type-specific.
+For DBI-based storage, these arguments are the dsn, username,
+password, and connect options, respectively.  These are optional for
+existing Schemas, but required if you use either of the C<create=>
+options.
 
 Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
 
@@ -50,14 +54,14 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
 
   # Use DBIx::Class::Schema::Loader to create a static DBIx::Class::Schema,
   #  and a Model which references it:
-  script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass create=static dbi:mysql:foodb myuname mypass
+  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=static dbi:mysql:foodb myuname mypass
 
   # Create a dynamic DBIx::Class::Schema::Loader-based Schema,
   #  and a Model which references it:
-  script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass create=dynamic dbi:mysql:foodb myuname mypass
+  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=dynamic dbi:mysql:foodb myuname mypass
 
   # Reference an existing Schema of any kind, and provide some connection information for ->config:
-  script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass dbi:mysql:foodb myuname mypass
+  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass dbi:mysql:foodb myuname mypass
 
   # Same, but don't supply connect information yet (you'll need to do this
   #  in your app config, or [not recommended] in the schema itself).
