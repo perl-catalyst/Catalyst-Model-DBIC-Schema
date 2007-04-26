@@ -1,0 +1,232 @@
+NAME
+    Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
+
+SYNOPSIS
+    Manual creation of a DBIx::Class::Schema and a
+    Catalyst::Model::DBIC::Schema:
+
+    1.  Create the DBIx:Class schema in MyApp/Schema/FilmDB.pm:
+
+          package MyApp::Schema::FilmDB;
+          use base qw/DBIx::Class::Schema/;
+
+          __PACKAGE__->load_classes(qw/Actor Role/);
+
+    2.  Create some classes for the tables in the database, for example an
+        Actor in MyApp/Schema/FilmDB/Actor.pm:
+
+          package MyApp::Schema::FilmDB::Actor;
+          use base qw/DBIx::Class/
+
+          __PACKAGE__->load_components(qw/Core/);
+          __PACKAGE__->table('actor');
+
+          ...
+
+        and a Role in MyApp/Schema/Role.pm:
+
+          package MyApp::Schema::FilmDB::Role;
+          use base qw/DBIx::Class/
+
+          __PACKAGE__->load_components(qw/Core/);
+          __PACKAGE__->table('role');
+
+          ...    
+
+        Notice that the schema is in MyApp::Schema, not in MyApp::Model.
+        This way it's usable as a standalone module and you can test/run it
+        without Catalyst.
+
+    3.  To expose it to Catalyst as a model, you should create a DBIC Model
+        in MyApp/Model/FilmDB.pm:
+
+          package MyApp::Model::FilmDB;
+          use base qw/Catalyst::Model::DBIC::Schema/;
+
+          __PACKAGE__->config(
+              schema_class => 'MyApp::Schema::FilmDB',
+              connect_info => [
+                                "DBI:...",
+                                "username",
+                                "password",
+                                {AutoCommit => 1}
+                              ]
+          );
+
+        See below for a full list of the possible config parameters.
+
+    Now you have a working Model, accessing your separate DBIC Schema. Which
+    can be used/accessed in the normal Catalyst manner, via $c->model():
+
+      my $actor = $c->model('FilmDB::Actor')->find(1);
+
+    You can also use it to set up DBIC authentication with
+    Authentication::Store::DBIC in MyApp.pm:
+
+      package MyApp;
+
+      use Catalyst qw/... Authentication::Store::DBIC/;
+
+      ...
+
+      __PACKAGE__->config->{authentication}{dbic} = {
+          user_class      => 'FilmDB::Actor',
+          user_field      => 'name',
+          password_field  => 'password'
+      }
+
+    "$c->model()" returns a DBIx::Class::ResultSet for the source name
+    parameter passed. To find out more about which methods can be called on
+    a ResultSet, or how to add your own methods to it, please see the
+    ResultSet documentation in the DBIx::Class distribution.
+
+    Some examples are given below:
+
+      # to access schema methods directly:
+      $c->model('FilmDB')->schema->source(...);
+
+      # to access the source object, resultset, and class:
+      $c->model('FilmDB')->source(...);
+      $c->model('FilmDB')->resultset(...);
+      $c->model('FilmDB')->class(...);
+
+      # For resultsets, there's an even quicker shortcut:
+      $c->model('FilmDB::Actor')
+      # is the same as $c->model('FilmDB')->resultset('Actor')
+
+      # To get the composed schema for making new connections:
+      my $newconn = $c->model('FilmDB')->composed_schema->connect(...);
+
+      # Or the same thing via a convenience shortcut:
+      my $newconn = $c->model('FilmDB')->connect(...);
+
+      # or, if your schema works on different storage drivers:
+      my $newconn = $c->model('FilmDB')->composed_schema->clone();
+      $newconn->storage_type('::LDAP');
+      $newconn->connection(...);
+
+      # and again, a convenience shortcut
+      my $newconn = $c->model('FilmDB')->clone();
+      $newconn->storage_type('::LDAP');
+      $newconn->connection(...);
+
+DESCRIPTION
+    This is a Catalyst Model for DBIx::Class::Schema-based Models. See the
+    documentation for Catalyst::Helper::Model::DBIC::Schema for information
+    on generating these Models via Helper scripts.
+
+CONFIG PARAMETERS
+    schema_class
+        This is the classname of your DBIx::Class::Schema Schema. It needs
+        to be findable in @INC, but it does not need to be inside the
+        "Catalyst::Model::" namespace. This parameter is required.
+
+    connect_info
+        This is an arrayref of connection parameters, which are specific to
+        your "storage_type" (see your storage type documentation for more
+        details).
+
+        This is not required if "schema_class" already has connection
+        information defined inside itself (which isn't highly recommended,
+        but can be done)
+
+        For DBIx::Class::Storage::DBI, which is the only supported
+        "storage_type" in DBIx::Class at the time of this writing, the
+        parameters are your dsn, username, password, and connect options
+        hashref.
+
+        If you need to specify the DBIx::Class::Storage::DBI specific
+        parameter "on_connect_do", or the related "sql_maker" options
+        "limit_dialect", "quote_char", or "name_sep", you can place these
+        options into a hashref as the final element of the "connect_info"
+        arrayref. If in doubt, don't specify these options. You would know
+        it if you needed them.
+
+        Examples:
+
+          connect_info => [ 'dbi:Pg:dbname=mypgdb', 'postgres', '' ],
+
+          connect_info => [
+                            'dbi:SQLite:dbname=foo.db',
+                            {
+                              on_connect_do => [
+                                'PRAGMA synchronous = OFF',
+                              ],
+                            }
+                          ],
+
+          connect_info => [
+                            'dbi:Pg:dbname=mypgdb',
+                            'postgres',
+                            '',
+                            { AutoCommit => 0 },
+                            {
+                              on_connect_do => [
+                                'some SQL statement',
+                                'another SQL statement',
+                              ],
+                            }
+                          ],
+
+    storage_type
+        Allows the use of a different "storage_type" than what is set in
+        your "schema_class" (which in turn defaults to "::DBI" if not set in
+        current DBIx::Class). Completely optional, and probably unnecessary
+        for most people until other storage backends become available for
+        DBIx::Class.
+
+METHODS
+    new Instantiates the Model based on the above-documented ->config
+        parameters. The only required parameter is "schema_class".
+        "connect_info" is required in the case that "schema_class" does not
+        already have connection information defined for it.
+
+    schema
+        Accessor which returns the connected schema being used by the this
+        model. There are direct shortcuts on the model class itself for
+        schema->resultset, schema->source, and schema->class.
+
+    composed_schema
+        Accessor which returns the composed schema, which has no connection
+        info, which was used in constructing the "schema" above. Useful for
+        creating new connections based on the same schema/model. There are
+        direct shortcuts from the model object for composed_schema->clone
+        and composed_schema->connect
+
+    clone
+        Shortcut for ->composed_schema->clone
+
+    connect
+        Shortcut for ->composed_schema->connect
+
+    source
+        Shortcut for ->schema->source
+
+    class
+        Shortcut for ->schema->class
+
+    resultset
+        Shortcut for ->schema->resultset
+
+    storage
+        Provides an accessor for the connected schema's storage object. Used
+        often for debugging and controlling transactions.
+
+SEE ALSO
+    General Catalyst Stuff:
+
+    Catalyst::Manual, Catalyst::Test, Catalyst::Request, Catalyst::Response,
+    Catalyst::Helper, Catalyst,
+
+    Stuff related to DBIC and this Model style:
+
+    DBIx::Class, DBIx::Class::Schema, DBIx::Class::Schema::Loader,
+    Catalyst::Helper::Model::DBIC::Schema
+
+AUTHOR
+    Brandon L Black, "blblack@gmail.com"
+
+COPYRIGHT
+    This program is free software, you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
