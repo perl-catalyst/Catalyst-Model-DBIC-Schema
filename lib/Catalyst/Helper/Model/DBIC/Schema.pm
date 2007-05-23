@@ -2,6 +2,9 @@ package Catalyst::Helper::Model::DBIC::Schema;
 
 use strict;
 use warnings;
+
+our $VERSION = '0.20';
+
 use Carp;
 use UNIVERSAL::require;
 
@@ -19,20 +22,20 @@ Helper for the DBIC Schema Models.
 
 =head2 Arguments:
 
-C< CatalystModelName > is the short name for the Catalyst Model class
-being generated (i.e. callable with C< $c->model >
+C<CatalystModelName> is the short name for the Catalyst Model class
+being generated (i.e. callable with C<$c-E<gt>model('CatalystModelName')>).
 
-C< MyApp::SchemaClass > is the fully qualified classname of your Schema,
+C<MyApp::SchemaClass> is the fully qualified classname of your Schema,
 which might or might not yet exist.  Note that you should have a good
 reason to create this under a new global namespace, otherwise use an
 existing top level namespace for your schema class.
 
-C< create=dynamic > instructs this Helper to generate the named Schema
+C<create=dynamic> instructs this Helper to generate the named Schema
 class for you, basing it on L<DBIx::Class::Schema::Loader> (which
 means the table information will always be dynamically loaded at
 runtime from the database).
 
-C< create=static > instructs this Helper to generate the named Schema
+C<create=static> instructs this Helper to generate the named Schema
 class for you, using L<DBIx::Class::Schema::Loader> in "one shot"
 mode to create a standard, manually-defined L<DBIx::Class::Schema>
 setup, based on what the Loader sees in your database at this moment.
@@ -41,7 +44,7 @@ L<DBIx::Class::Schema::Loader> at runtime, and will not automatically
 adapt itself to changes in your database structure.  You can edit
 the generated classes by hand to refine them.
 
-C< connect_info > arguments are the same as what
+C<connect_info> arguments are the same as what
 DBIx::Class::Schema::connect expects, and are storage_type-specific.
 For DBI-based storage, these arguments are the dsn, username,
 password, and connect options, respectively.  These are optional for
@@ -67,9 +70,9 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
   #  in your app config, or [not recommended] in the schema itself).
   script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass
 
-=head2 METHODS
+=head1 METHODS
 
-=head3 mk_compclass
+=head2 mk_compclass
 
 =cut
 

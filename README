@@ -135,12 +135,8 @@ CONFIG PARAMETERS
         parameters are your dsn, username, password, and connect options
         hashref.
 
-        If you need to specify the DBIx::Class::Storage::DBI specific
-        parameter "on_connect_do", or the related "sql_maker" options
-        "limit_dialect", "quote_char", or "name_sep", you can place these
-        options into a hashref as the final element of the "connect_info"
-        arrayref. If in doubt, don't specify these options. You would know
-        it if you needed them.
+        See "connect_info" in DBIx::Class::Storage::DBI for a detailed
+        explanation of the arguments supported.
 
         Examples:
 

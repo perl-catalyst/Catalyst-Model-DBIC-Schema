@@ -1,14 +1,16 @@
 package Catalyst::Model::DBIC::Schema;
 
 use strict;
+use warnings;
+
+our $VERSION = '0.20';
+
 use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
 use NEXT;
 use UNIVERSAL::require;
 use Carp;
 use Data::Dumper;
 require DBIx::Class;
-
-our $VERSION = '0.19';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
 __PACKAGE__->mk_accessors('schema');
@@ -163,11 +165,8 @@ For L<DBIx::Class::Storage::DBI>, which is the only supported
 C<storage_type> in L<DBIx::Class> at the time of this writing, the
 parameters are your dsn, username, password, and connect options hashref.
 
-If you need to specify the L<DBIx::Class::Storage::DBI> specific parameter
-C<on_connect_do>, or the related C<sql_maker> options C<limit_dialect>,
-C<quote_char>, or C<name_sep>, you can place these options into a hashref
-as the final element of the C<connect_info> arrayref.  If in doubt, don't
-specify these options.  You would know it if you needed them.
+See L<DBIx::Class::Storage::DBI/connect_info> for a detailed explanation
+of the arguments supported.
 
 Examples:
 
