@@ -47,7 +47,7 @@ Actor in MyApp/Schema/FilmDB/Actor.pm:
 
   ...
 
-and a Role in MyApp/Schema/Role.pm:
+and a Role in MyApp/Schema/FilmDB/Role.pm:
 
   package MyApp::Schema::FilmDB::Role;
   use base qw/DBIx::Class/
