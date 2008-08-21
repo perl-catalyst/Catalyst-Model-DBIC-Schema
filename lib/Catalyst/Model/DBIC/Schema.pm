@@ -196,6 +196,28 @@ Examples:
                     }
                   ],
 
+Or using L<Config::General>:
+
+    <Model::FilmDB>
+        schema_class   MyApp::Schema::FilmDB
+        connect_info   dbi:Pg:dbname=mypgdb
+        connect_info   postgres
+        connect_info
+        <connect_info>
+            AutoCommit   0
+            on_connect_do   some SQL statement
+            on_connect_do   another SQL statement
+        </connect_info>
+    </Model::FilmDB>
+
+or
+
+    <Model::FilmDB>
+        schema_class   MyApp::Schema::FilmDB
+        connect_info   dbi:SQLite:dbname=foo.db
+    </Model::FilmDB>
+
+
 =item storage_type
 
 Allows the use of a different C<storage_type> than what is set in your
