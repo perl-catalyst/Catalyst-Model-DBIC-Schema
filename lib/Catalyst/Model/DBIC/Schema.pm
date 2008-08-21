@@ -156,7 +156,9 @@ C<Catalyst::Model::> namespace.  This parameter is required.
 =item connect_info
 
 This is an arrayref of connection parameters, which are specific to your
-C<storage_type> (see your storage type documentation for more details).
+C<storage_type> (see your storage type documentation for more details). 
+If you only need one parameter (e.g. the DSN), you can just pass a string 
+instead of an arrayref.
 
 This is not required if C<schema_class> already has connection information
 defined inside itself (which isn't highly recommended, but can be done)
@@ -289,7 +291,11 @@ sub new {
     $self->schema->storage_type($self->{storage_type})
         if $self->{storage_type};
 
-    $self->schema->connection(@{$self->{connect_info}});
+    $self->schema->connection( 
+        ref $self->{connect_info} eq 'ARRAY' ? 
+        @{$self->{connect_info}} : 
+        $self->{connect_info}
+    );
     
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {
