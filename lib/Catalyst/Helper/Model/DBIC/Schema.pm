@@ -3,7 +3,7 @@ package Catalyst::Helper::Model::DBIC::Schema;
 use strict;
 use warnings;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 use Carp;
 use UNIVERSAL::require;
