@@ -2,6 +2,7 @@ Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
 0.22  Pending
 		- Fix oddly formatted error message.
+        - Doc patch to clarify generated classes
 
 0.21  Fri Aug 22 00:26:05 UTC 2008
         - doc fix (RT #31848)

@@ -102,10 +102,10 @@ Authentication::Store::DBIC in MyApp.pm:
       password_field  => 'password'
   }
 
-C<< $c->model() >> returns a L<DBIx::Class::ResultSet> for the source name
-parameter passed. To find out more about which methods can be called on a
-ResultSet, or how to add your own methods to it, please see the ResultSet
-documentation in the L<DBIx::Class> distribution.
+C<< $c->model('Schema::Source') >> returns a L<DBIx::Class::ResultSet> for 
+the source name parameter passed. To find out more about which methods can 
+be called on a ResultSet, or how to add your own methods to it, please see 
+the ResultSet documentation in the L<DBIx::Class> distribution.
 
 Some examples are given below:
 
@@ -142,6 +142,38 @@ Some examples are given below:
 This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.  See
 the documentation for L<Catalyst::Helper::Model::DBIC::Schema> for
 information on generating these Models via Helper scripts.
+
+When your Catalyst app starts up, a thin Model layer is created as an 
+interface to your DBIC Schema. It should be clearly noted that the model 
+object returned by C<< $c->model('FilmDB') >> is NOT itself a DBIC schema or 
+resultset object, but merely a wrapper proving L<methods|/METHODS> to access 
+the underlying schema. 
+
+In addition to this model class, a shortcut class is generated for each 
+source in the schema, allowing easy and direct access to a resultset of the 
+corresponding type. These generated classes are even thinner than the model 
+class, providing no public methods but simply hooking into Catalyst's 
+model() accessor via the 
+L<ACCEPT_CONTEXT|Catalyst::Component/ACCEPT_CONTEXT> mechanism. The complete 
+contents of each generated class is roughly equivalent to the following:
+
+  package MyApp::Model::FilmDB::Actor
+  sub ACCEPT_CONTEXT {
+      my ($self, $c) = @_;
+      $c->model('FilmDB')->resultset('Actor');
+  }
+
+In short, there are three techniques available for obtaining a DBIC 
+resultset object: 
+
+  # the long way
+  my $rs = $c->model('FilmDB')->schema->resultset('Actor');
+
+  # using the shortcut method on the model object
+  my $rs = $c->model('FilmDB')->resultset('Actor');
+
+  # using the generated class directly
+  my $rs = $c->model('FilmDB::Actor');
 
 =head1 CONFIG PARAMETERS
 
