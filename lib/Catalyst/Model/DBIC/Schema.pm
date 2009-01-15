@@ -82,7 +82,7 @@ See below for a full list of the possible config parameters.
 
 =back
 
-Now you have a working Model, accessing your separate DBIC Schema. Which can
+Now you have a working Model which accesses your separate DBIC Schema. This can
 be used/accessed in the normal Catalyst manner, via $c->model():
 
   my $actor = $c->model('FilmDB::Actor')->find(1);
