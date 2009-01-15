@@ -175,6 +175,11 @@ resultset object:
   # using the generated class directly
   my $rs = $c->model('FilmDB::Actor');
 
+In order to add methods to a DBIC resultset, you cannot simply add them to 
+the source (row, table) definition class; you must define a separate custom 
+resultset class. See L<DBIx::Class::Manual::Cookbook/"Predefined searches"> 
+for more info.
+
 =head1 CONFIG PARAMETERS
 
 =over 4
