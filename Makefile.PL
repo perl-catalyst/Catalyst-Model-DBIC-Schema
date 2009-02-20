@@ -13,7 +13,7 @@ test_requires 'Test::More';
 feature 'Catalyst::Helper support',
     -default                      => 0,
     'Catalyst::Devel'             => '1.0',
-    'DBIx::Class::Schema::Loader' => '0.03012';
+    'DBIx::Class::Schema::Loader' => '0.04005';
 
 if(-e 'MANIFEST.SKIP') {
     system("pod2text lib/Catalyst/Model/DBIC/Schema.pm > README");

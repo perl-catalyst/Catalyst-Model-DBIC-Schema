@@ -122,11 +122,35 @@ sub mk_compclass {
             $num++;
         }
 
-        make_schema_at(
-            $schema_class,
-            { relationships => 1 },
-            \@loader_connect_info,
-        );
+# Check if we need to be backward-compatible.
+        my $compatible = 0;
+
+        my @schema_pm   = split '::', $schema_class;
+        $schema_pm[-1] .= '.pm';
+        my $schema_file = File::Spec->catfile($helper->{base}, 'lib', @schema_pm);
+
+        if (-f $schema_file) {
+            my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
+            $compatible = 1 if $schema_code =~ /->load_classes/;
+        }
+
+        if ($compatible) {
+            make_schema_at(
+                $schema_class,
+                { relationships => 1 },
+                \@loader_connect_info,
+            );
+        } else { # use some saner defaults
+            make_schema_at(
+                $schema_class,
+                {
+                    relationships => 1,
+                    use_namespaces => 1,
+                    components => ['InflateColumn::DateTime']
+                },
+                \@loader_connect_info,
+            );
+        }
     }
 
     my $file = $helper->{file};
