@@ -1,8 +1,13 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
-0.22  Pending
-		- Fix oddly formatted error message.
+0.22  Mon Feb 23 04:47:53 UTC 2009
+        - Fix oddly formatted error message.
         - Doc patch to clarify generated classes
+        - Switch to use_namespaces and InflateColumn::DateTime for create=static
+          by default, with backcompat
+        - Switch to MRO::Compat from NEXT
+        - Add support for extra Schema::Loader options such as db_schema and
+          components
 
 0.21  Fri Aug 22 00:26:05 UTC 2008
         - doc fix (RT #31848)
