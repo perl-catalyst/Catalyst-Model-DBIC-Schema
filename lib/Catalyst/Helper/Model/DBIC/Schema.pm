@@ -59,11 +59,10 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
   #  and a Model which references it:
   script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=static dbi:mysql:foodb myuname mypass
 
-  # Same, but with extra Schema::Loader args such as db_schema:
-  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=static db_schema=foodb dbi:Pg:dbname=foodb myuname mypass
+  # Same, but with extra Schema::Loader args (separate multiple values by commas):
+  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=static db_schema=foodb components=Foo,Bar exclude='^wibble|wobble$' dbi:Pg:dbname=foodb myuname mypass
 
-  # Likewise, for multiple values such as a components:
-  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=static components=Some::Component components=Some::OtherComponent dbi:Pg:dbname=foodb myuname mypass
+  # See DBIx::Class::Schema::Loader::Base for list of options
 
   # Create a dynamic DBIx::Class::Schema::Loader-based Schema,
   #  and a Model which references it:
@@ -94,6 +93,17 @@ sub mk_compclass {
         shift @connect_info;
     }
 
+    my %extra_args;
+    while (@connect_info && $connect_info[0] !~ /^dbi:/) {
+        my ($key, $val) = split /=/, shift(@connect_info);
+
+        if ((my @vals = split /,/ => $val) > 1) {
+            $extra_args{$key} = \@vals;
+        } else {
+            $extra_args{$key} = $val;
+        }
+    }
+
     if(@connect_info) {
         $helper->{setup_connect_info} = 1;
         my @helper_connect_info = @connect_info;
@@ -117,20 +127,6 @@ sub mk_compclass {
         my $schema_dir  = File::Spec->catfile( $helper->{base}, 'lib' );
         DBIx::Class::Schema::Loader->use("dump_to_dir:$schema_dir", 'make_schema_at')
             or croak "Cannot load DBIx::Class::Schema::Loader: $@";
-
-        my %extra_args;
-        while (@connect_info && $connect_info[0] !~ /^dbi:/) {
-            my ($key, $val) = split /=/, shift(@connect_info);
-
-            if (exists $extra_args{$key}) {
-                $extra_args{$key} = [ $extra_args{$key} ]
-                    unless ref $extra_args{$key};
-
-                push @{ $extra_args{$key} }, $val;
-            } else {
-                $extra_args{$key} = $val;
-            }
-        }
 
         my @loader_connect_info = @connect_info;
         my $num = 6; # argument number on the commandline for "dbi:..."
@@ -161,6 +157,15 @@ sub mk_compclass {
                 unless ref $extra_args{components};
 
             push @components, @{ delete $extra_args{components} };
+        }
+
+        for my $re_opt (qw/constraint exclude/) {
+            $extra_args{$re_opt} = qr/$extra_args{$re_opt}/
+                if exists $extra_args{$re_opt};
+        }
+
+        if (exists $extra_args{moniker_map}) {
+            die "The moniker_map option is not currently supported by this helper, please write your own DBIx::Class::Schema::Loader script if you need it."
         }
 
         make_schema_at(
