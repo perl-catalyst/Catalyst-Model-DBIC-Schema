@@ -6,7 +6,8 @@ use warnings;
 our $VERSION = '0.23';
 
 use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
-use NEXT;
+use MRO::Compat;
+use mro 'c3';
 use UNIVERSAL::require;
 use Carp;
 use Data::Dumper;
@@ -318,7 +319,7 @@ Used often for debugging and controlling transactions.
 =cut
 
 sub new {
-    my $self = shift->NEXT::new(@_);
+    my $self = shift->next::method(@_);
     
     my $class = ref($self);
     my $model_name = $class;
