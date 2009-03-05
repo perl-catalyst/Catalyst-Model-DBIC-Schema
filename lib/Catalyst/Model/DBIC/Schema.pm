@@ -6,7 +6,6 @@ use warnings;
 our $VERSION = '0.23';
 
 use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
-use Class::C3;
 use MRO::Compat;
 use mro 'c3';
 use UNIVERSAL::require;

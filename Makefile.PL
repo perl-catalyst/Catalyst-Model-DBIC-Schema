@@ -9,6 +9,7 @@ requires 'UNIVERSAL::require'    => '0.10';
 requires 'Class::Data::Accessor' => '0.02';
 requires 'Class::Accessor::Fast' => '0.22';
 requires 'MRO::Compat';
+requires 'Class::C3'             => '0.20';
 test_requires 'Test::More';
 
 feature 'Catalyst::Helper support',
