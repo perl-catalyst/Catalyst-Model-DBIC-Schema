@@ -2,8 +2,9 @@ package Catalyst::Helper::Model::DBIC::Schema;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
-our $VERSION = '0.21';
+our $VERSION = '0.23';
 
 use Carp;
 use UNIVERSAL::require;

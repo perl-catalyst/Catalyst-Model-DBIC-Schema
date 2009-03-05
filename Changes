@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.23  (unreleased)
+        - Kill a couple of warnings (one due to MRO::Compat)
+
 0.22  Tue Mar  3 15:54:19 UTC 2009
         - Fix oddly formatted error message.
         - Doc patch to clarify generated classes
@@ -85,3 +88,5 @@ Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
 0.04  Mon Feb 13 04:22:49 UTC 2006
         - First public release
+
+0.23  2009-03-04 18:18:11
