@@ -2,19 +2,24 @@ package Catalyst::Model::DBIC::Schema;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
-use base qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
+use parent qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
 use MRO::Compat;
 use mro 'c3';
 use UNIVERSAL::require;
 use Carp;
 use Data::Dumper;
-require DBIx::Class;
+use DBIx::Class ();
+use Scalar::Util 'reftype';
+use namespace::clean -except => 'meta';
 
 __PACKAGE__->mk_classaccessor('composed_schema');
-__PACKAGE__->mk_accessors('schema');
+__PACKAGE__->mk_accessors(qw/
+    schema connect_info schema_class storage_type caching model_name
+/);
 
 =head1 NAME
 
@@ -71,12 +76,11 @@ MyApp/Model/FilmDB.pm:
 
   __PACKAGE__->config(
       schema_class => 'MyApp::Schema::FilmDB',
-      connect_info => [
-                        "DBI:...",
-                        "username",
-                        "password",
-                        {AutoCommit => 1}
-                      ]
+      connect_info => {
+                        dsn => "DBI:...",
+                        user => "username",
+                        password => "password",
+                      }
   );
 
 See below for a full list of the possible config parameters.
@@ -210,39 +214,39 @@ of the arguments supported.
 
 Examples:
 
-  connect_info => [ 'dbi:Pg:dbname=mypgdb', 'postgres', '' ],
+  connect_info => {
+    dsn => 'dbi:Pg:dbname=mypgdb',
+    user => 'postgres',
+    password => ''
+  }
 
-  connect_info => [
-                    'dbi:SQLite:dbname=foo.db',
-                    {
-                      on_connect_do => [
-                        'PRAGMA synchronous = OFF',
-                      ],
-                    }
-                  ],
+  connect_info => {
+    dsn => 'dbi:SQLite:dbname=foo.db',
+    on_connect_do => [
+      'PRAGMA synchronous = OFF',
+    ]
+  }
 
-  connect_info => [
-                    'dbi:Pg:dbname=mypgdb',
-                    'postgres',
-                    '',
-                    { AutoCommit => 0 },
-                    {
-                      on_connect_do => [
-                        'some SQL statement',
-                        'another SQL statement',
-                      ],
-                    }
-                  ],
+  connect_info => {
+    dsn => 'dbi:Pg:dbname=mypgdb',
+    user => 'postgres',
+    password => '',
+    pg_enable_utf8 => 1,
+    on_connect_do => [
+      'some SQL statement',
+      'another SQL statement',
+    ],
+  }
 
 Or using L<Config::General>:
 
     <Model::FilmDB>
         schema_class   MyApp::Schema::FilmDB
-        connect_info   dbi:Pg:dbname=mypgdb
-        connect_info   postgres
-        connect_info
         <connect_info>
-            AutoCommit   0
+            dsn   dbi:Pg:dbname=mypgdb
+            user   postgres
+            password ''
+            auto_savepoint 1
             on_connect_do   some SQL statement
             on_connect_do   another SQL statement
         </connect_info>
@@ -255,6 +259,56 @@ or
         connect_info   dbi:SQLite:dbname=foo.db
     </Model::FilmDB>
 
+Or using L<YAML>:
+
+  Model::MyDB:
+      schema_class: MyDB
+      connect_info:
+          dsn: dbi:Oracle:mydb
+          user: mtfnpy
+          password: mypass
+          LongReadLen: 1000000
+          LongTruncOk: 1
+          on_connect_do: [ "alter session set nls_date_format = 'YYYY-MM-DD HH24:MI:SS'" ]
+          cursor_class: 'DBIx::Class::Cursor::Cached'
+
+The old arrayref style with hashrefs for L<DBI> then L<DBIx::Class> options is also
+supported:
+
+  connect_info => [
+    'dbi:Pg:dbname=mypgdb',
+    'postgres',
+    '',
+    {
+      pg_enable_utf8 => 1,
+    },
+    {
+      on_connect_do => [
+        'some SQL statement',
+        'another SQL statement',
+      ],
+    }
+  ]
+
+=item caching
+
+Whether or not to enable caching support using L<DBIx::Class::Cursor::Cached>
+and L<Catalyst::Plugin::Cache>. Enabled by default.
+
+In order for this to work, L<Catalyst::Plugin::Cache> must be configured and
+loaded. A possible configuration would look like this:
+
+  <Plugin::Cache>
+    <backend>       
+      class Cache::FastMmap
+      unlink_on_exit 1
+    </backend>
+  </Plugin::Cache>
+
+Then in your queries, set the C<cache_for> ResultSet attribute to the number of
+seconds you want the query results to be cached for, eg.:
+
+  $c->model('DB::Table')->search({ foo => 'bar' }, { cache_for => 18000 });
 
 =item storage_type
 
@@ -314,28 +368,26 @@ Shortcut for ->schema->resultset
 Provides an accessor for the connected schema's storage object.
 Used often for debugging and controlling transactions.
 
-=back
-
 =cut
 
 sub new {
     my $self = shift->next::method(@_);
     
-    my $class = ref($self);
-    my $model_name = $class;
-    $model_name =~ s/^[\w:]+::(?:Model|M):://;
+    my $class = ref $self;
+
+    $self->_build_model_name;
 
     croak "->config->{schema_class} must be defined for this model"
-        unless $self->{schema_class};
+        unless $self->schema_class;
 
-    my $schema_class = $self->{schema_class};
+    my $schema_class = $self->schema_class;
 
     $schema_class->require
         or croak "Cannot load schema class '$schema_class': $@";
 
-    if( !$self->{connect_info} ) {
+    if( !$self->connect_info ) {
         if($schema_class->storage && $schema_class->storage->connect_info) {
-            $self->{connect_info} = $schema_class->storage->connect_info;
+            $self->connect_info($schema_class->storage->connect_info);
         }
         else {
             croak "Either ->config->{connect_info} must be defined for $class"
@@ -346,25 +398,19 @@ sub new {
     }
 
     $self->composed_schema($schema_class->compose_namespace($class));
+
     $self->schema($self->composed_schema->clone);
 
-    $self->schema->storage_type($self->{storage_type})
-        if $self->{storage_type};
+    $self->schema->storage_type($self->storage_type)
+        if $self->storage_type;
 
-    $self->schema->connection( 
-        ref $self->{connect_info} eq 'ARRAY' ? 
-        @{$self->{connect_info}} : 
-        $self->{connect_info}
-    );
-    
-    no strict 'refs';
-    foreach my $moniker ($self->schema->sources) {
-        my $classname = "${class}::$moniker";
-        *{"${classname}::ACCEPT_CONTEXT"} = sub {
-            shift;
-            shift->model($model_name)->resultset($moniker);
-        }
-    }
+    $self->_normalize_connect_info;
+
+    $self->_setup_caching;
+
+    $self->schema->connection($self->connect_info);
+
+    $self->_install_rs_models;
 
     return $self;
 }
@@ -374,6 +420,143 @@ sub clone { shift->composed_schema->clone(@_); }
 sub connect { shift->composed_schema->connect(@_); }
 
 sub storage { shift->schema->storage(@_); }
+
+=item ACCEPT_CONTEXT
+
+Sets up runtime cache support on $c->model invocation.
+
+=cut
+
+sub ACCEPT_CONTEXT {
+    my ($self, $c) = @_;
+
+    return $self unless 
+        $self->caching;
+    
+    unless ($c->can('cache') && ref $c->cache) {
+        $c->log->debug("DBIx::Class cursor caching disabled, you don't seem to"
+            . " have a working Cache plugin.");
+        $self->caching(0);
+        $self->_reset_cursor_class;
+        return $self;
+    }
+
+    if (ref $self->schema->default_resultset_attributes) {
+        $self->schema->default_resultset_attributes->{cache_object} =
+            $c->cache;
+    } else {
+        $self->schema->default_resultset_attributes({
+            cache_object => $c->cache
+        });
+    }
+
+    $self;
+}
+
+sub _normalize_connect_info {
+    my $self = shift;
+
+    my $connect_info = $self->connect_info;
+
+    my @connect_info = reftype $connect_info eq 'ARRAY' ?
+        @$connect_info : $connect_info;
+
+    my %connect_info;
+
+    if (!ref $connect_info[0]) { # array style
+        @connect_info{qw/dsn user password/} =
+            splice @connect_info, 0, 3;
+
+        for my $i (0..1) {
+            my $extra = shift @connect_info;
+            last unless $extra;
+            croak "invalid connect_info" unless reftype $extra eq 'HASH';
+
+            %connect_info = (%connect_info, %$extra);
+        }
+
+        croak "invalid connect_info" if @connect_info;
+    } elsif (@connect_info == 1 && reftype $connect_info[0] eq 'HASH') {
+        %connect_info = %{ $connect_info[0] };
+    } elsif (reftype $connect_info eq 'HASH') {
+        %connect_info = %$connect_info;
+    } else {
+        croak "invalid connect_info";
+    }
+
+    if (exists $connect_info{cursor_class}) {
+        $connect_info{cursor_class}->require
+            or croak "invalid connect_info: Cannot load your cursor_class"
+                     . " $connect_info{cursor_class}: $@";
+    }
+
+    $self->connect_info(\%connect_info);
+}
+
+sub _install_rs_models {
+    my $self  = shift;
+    my $class = ref $self;
+
+    no strict 'refs';
+    foreach my $moniker ($self->schema->sources) {
+        my $classname = "${class}::$moniker";
+        *{"${classname}::ACCEPT_CONTEXT"} = sub {
+            shift;
+            shift->model($self->model_name)->resultset($moniker);
+        }
+    }
+}
+
+sub _build_model_name {
+    my $self = shift;
+
+    my $class = ref $self;
+    my $model_name = $class;
+    $model_name =~ s/^[\w:]+::(?:Model|M):://;
+
+    $self->model_name($model_name);
+}
+
+sub _setup_caching {
+    my $self = shift;
+
+    return if defined $self->caching && !$self->caching;
+
+    $self->caching(0);
+
+    if (my $cursor_class = $self->connect_info->{cursor_class}) {
+        unless ($cursor_class->can('clear_cache')) {
+            carp "Caching disabled, cursor_class $cursor_class does not"
+                 . " support it.";
+            return;
+        }
+    } else {
+        my $cursor_class = 'DBIx::Class::Cursor::Cached';
+
+        unless ($cursor_class->require) {
+            carp "Caching disabled, cannot load $cursor_class: $@";
+            return;
+        }
+
+        $self->connect_info->{cursor_class} = $cursor_class;
+    }
+
+    $self->caching(1);
+
+    1;
+}
+
+sub _reset_cursor_class {
+    my $self = shift;
+
+    if ($self->connect_info->{cursor_class} eq 'DBIx::Class::Cursor::Cached') {
+        $self->storage->cursor_class('DBIx::Class::Storage::DBI::Cursor');
+    }
+    
+    1;
+}
+
+=back
 
 =head1 SEE ALSO
 

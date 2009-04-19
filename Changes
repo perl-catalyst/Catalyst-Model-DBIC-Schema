@@ -1,5 +1,10 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - switch to hashref connect_info for DBIC 8100
+        - better helper option parsing
+        - pass loader opts to dynamic schemas
+        - cursor caching support for model
+
 0.23  Sun Mar  8 20:30:02 GMT 2009
         - Kill a couple of warnings (one due to MRO::Compat)
 

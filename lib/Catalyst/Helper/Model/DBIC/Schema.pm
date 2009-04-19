@@ -4,10 +4,19 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-our $VERSION = '0.23';
+our $VERSION = '0.24';
+
+use parent 'Class::Accessor::Fast';
 
 use Carp;
 use UNIVERSAL::require;
+use Tie::IxHash ();
+use Data::Dumper ();
+use List::Util ();
+
+__PACKAGE__->mk_accessors(qw/
+  helper schema_class loader_args connect_info _old_schema
+/);
 
 =head1 NAME
 
@@ -15,7 +24,9 @@ Catalyst::Helper::Model::DBIC::Schema - Helper for DBIC Schema Models
 
 =head1 SYNOPSIS
 
-  script/create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass [ create=dynamic | create=static ] [ Schema::Loader opts ] [ connect_info arguments ]
+  script/create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass \
+    [ create=dynamic | create=static ] [ Schema::Loader opts ] \
+    [ dsn user pass ] [ other connect_info arguments ]
 
 =head1 DESCRIPTION
 
@@ -58,19 +69,31 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
 
   # Use DBIx::Class::Schema::Loader to create a static DBIx::Class::Schema,
   #  and a Model which references it:
-  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=static dbi:mysql:foodb myuname mypass
+  script/myapp_create.pl model CatalystModelName DBIC::Schema \
+    MyApp::SchemaClass create=static dbi:mysql:foodb myuname mypass
+
+  # Same, with extra connect_info args
+  script/myapp_create.pl model CatalystModelName DBIC::Schema \
+    MyApp::SchemaClass create=static dbi:SQLite:foo.db '' '' \
+    AutoCommit=1 cursor_class=DBIx::Class::Cursor::Cached \
+    on_connect_do='["select 1", "select 2"]'
 
   # Same, but with extra Schema::Loader args (separate multiple values by commas):
-  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=static db_schema=foodb components=Foo,Bar exclude='^wibble|wobble$' dbi:Pg:dbname=foodb myuname mypass
+  script/myapp_create.pl model CatalystModelName DBIC::Schema \
+    MyApp::SchemaClass create=static db_schema=foodb components=Foo,Bar \
+    exclude='^wibble|wobble$' moniker_map='{ foo => "FFFFUUUU" }' \
+    dbi:Pg:dbname=foodb myuname mypass
 
   # See DBIx::Class::Schema::Loader::Base for list of options
 
   # Create a dynamic DBIx::Class::Schema::Loader-based Schema,
   #  and a Model which references it:
-  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass create=dynamic dbi:mysql:foodb myuname mypass
+  script/myapp_create.pl model CatalystModelName DBIC::Schema \
+    MyApp::SchemaClass create=dynamic dbi:mysql:foodb myuname mypass
 
   # Reference an existing Schema of any kind, and provide some connection information for ->config:
-  script/myapp_create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass dbi:mysql:foodb myuname mypass
+  script/myapp_create.pl model CatalystModelName DBIC::Schema \
+    MyApp::SchemaClass dbi:mysql:foodb myuname mypass
 
   # Same, but don't supply connect information yet (you'll need to do this
   #  in your app config, or [not recommended] in the schema itself).
@@ -83,110 +106,295 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
 =cut
 
 sub mk_compclass {
-    my ( $self, $helper, $schema_class, @connect_info) = @_;
+    my ($package, $helper, $schema_class, @args) = @_;
+
+    my $self = $package->new;
 
     $helper->{schema_class} = $schema_class
         or croak "Must supply schema class name";
 
+    $self->schema_class($schema_class);
+    $self->helper($helper);
+
     my $create = '';
-    if($connect_info[0] && $connect_info[0] =~ /^create=(dynamic|static)$/) {
+    if ($args[0] && $args[0] =~ /^create=(dynamic|static)$/) {
         $create = $1;
-        shift @connect_info;
+        shift @args;
+
+        if (@args) {
+            $self->_parse_loader_args(\@args);
+
+            if (List::Util::first { /dbi:/ } @args) {
+                $helper->{setup_connect_info} = 1;
+
+                $helper->{connect_info} =
+                $self->_build_helper_connect_info(\@args);
+
+                $self->_parse_connect_info(\@args) if $create eq 'static';
+            }
+        }
     }
 
-    my %extra_args;
-    while (@connect_info && $connect_info[0] !~ /^dbi:/) {
-        my ($key, $val) = split /=/, shift(@connect_info);
+    $helper->{generator} = ref $self;
+    $helper->{generator_version} = $VERSION;
+
+    if ($create eq 'dynamic') {
+        $self->helper->{loader_args} = $self->_build_helper_loader_args;
+        $self->_gen_dynamic_schema;
+    } elsif ($create eq 'static') {
+        $self->_gen_static_schema;
+    }
+
+    $self->_gen_model;
+}
+
+sub _parse_loader_args {
+    my ($self, $args) = @_;
+
+    my %loader_args = $self->_read_loader_args($args);
+
+    while (my ($key, $val) = each %loader_args) {
+        next if $key =~ /^(?:components|constraint|exclude)\z/;
+
+        $loader_args{$key} = eval $val;
+        die "syntax error for loader args key '$key' with value '$val': $@"
+            if $@;
+    }
+
+    my @components =
+    $self->_build_loader_components(delete $loader_args{components});
+
+    for my $re_opt (qw/constraint exclude/) {
+        $loader_args{$re_opt} = qr/$loader_args{$re_opt}/
+        if exists $loader_args{$re_opt};
+    }
+
+    tie my %result, 'Tie::IxHash';
+
+    %result = (
+        relationships => 1,
+        (%loader_args ? %loader_args : ()),
+        (!$self->_is_old_schema ? (
+                use_namespaces => 1
+            ) : ()),
+        (@components ? (
+                components => \@components
+            ) : ())
+    );
+
+    $self->loader_args(\%result);
+
+    wantarray ? %result : \%result;
+}
+
+sub _read_loader_args {
+    my ($self, $args) = @_;
+
+    my %loader_args;
+
+    while (@$args && $args->[0] !~ /^dbi:/) {
+        my ($key, $val) = split /=/, shift(@$args), 2;
 
         if ((my @vals = split /,/ => $val) > 1) {
-            $extra_args{$key} = \@vals;
+            $loader_args{$key} = \@vals;
         } else {
-            $extra_args{$key} = $val;
+            $loader_args{$key} = $val;
         }
     }
 
-    if(@connect_info) {
-        $helper->{setup_connect_info} = 1;
-        my @helper_connect_info = @connect_info;
-        for(@helper_connect_info) {
-            $_ = qq{'$_'} if $_ !~ /^\s*[[{]/;
+    wantarray ? %loader_args : \%loader_args;
+}
+
+sub _build_helper_loader_args {
+    my $self = shift;
+
+    my $args = $self->loader_args;
+
+    tie my %loader_args, 'Tie::IxHash';
+
+    while (my ($arg, $val) = each %$args) {
+        if (ref $val) {
+            $loader_args{$arg} = $self->_data_struct_to_string($val);
+        } else {
+            $loader_args{$arg} = qq{'$val'};
         }
-        $helper->{connect_info} = \@helper_connect_info;
     }
 
-    if($create eq 'dynamic') {
-        my @schema_parts = split(/\:\:/, $helper->{schema_class});
-        my $schema_file_part = pop @schema_parts;
+    \%loader_args
+}
 
-        my $schema_dir  = File::Spec->catfile( $helper->{base}, 'lib', @schema_parts );
-        my $schema_file = File::Spec->catfile( $schema_dir, $schema_file_part . '.pm' );
+sub _build_loader_components {
+    my ($self, $components) = @_;
 
-        $helper->mk_dir($schema_dir);
-        $helper->render_file( 'schemaclass', $schema_file );
+    my @components = $self->_is_old_schema ? () : ('InflateColumn::DateTime');
+
+    if ($components) {
+        $components = [ $components ] if !ref $components;
+        push @components, @$components;
     }
-    elsif($create eq 'static') {
-        my $schema_dir  = File::Spec->catfile( $helper->{base}, 'lib' );
-        DBIx::Class::Schema::Loader->use("dump_to_dir:$schema_dir", 'make_schema_at')
-            or croak "Cannot load DBIx::Class::Schema::Loader: $@";
 
-        my @loader_connect_info = @connect_info;
-        my $num = 6; # argument number on the commandline for "dbi:..."
-        for(@loader_connect_info) {
-            if(/^\s*[[{]/) {
-                $_ = eval "$_";
-                croak "Perl syntax error in commandline argument $num: $@" if $@;
+    wantarray ? @components : \@components;
+}
+
+sub _build_helper_connect_info {
+    my ($self, $connect_info) = @_;
+
+    my @connect_info = @$connect_info;
+
+    my ($dsn, $user, $password) = splice @connect_info, 0, 3;
+
+    tie my %helper_connect_info, 'Tie::IxHash';
+
+    %helper_connect_info = (
+        dsn => qq{'$dsn'},
+        user => qq{'$user'},
+        password => qq{'$password'}
+    );
+
+    for (@connect_info) {
+        if (/^\s*{.*}\s*\z/) {
+            my $hash = eval $_;
+            die "Syntax errorr in connect_info hash: $_: $@" if $@;
+            my %hash = %$hash;
+
+            for my $key (keys %hash) {
+                my $val = $hash{$key};
+
+                if (ref $val) {
+                    $val = $self->_data_struct_to_string($val);
+                } else {
+                    $val = qq{'$val'};
+                }
+
+                $helper_connect_info{$key} = $val;
             }
-            $num++;
+
+            next;
         }
 
-# Check if we need to be backward-compatible.
-        my $compatible = 0;
+        my ($key, $val) = split /=/, $_, 2;
 
-        my @schema_pm   = split '::', $schema_class;
-        $schema_pm[-1] .= '.pm';
-        my $schema_file = File::Spec->catfile($helper->{base}, 'lib', @schema_pm);
-
-        if (-f $schema_file) {
-            my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
-            $compatible = 1 if $schema_code =~ /->load_classes/;
-        }
-
-        my @components = $compatible ? () : ('InflateColumn::DateTime');
-
-        if (exists $extra_args{components}) {
-            $extra_args{components} = [ $extra_args{components} ]
-                unless ref $extra_args{components};
-
-            push @components, @{ delete $extra_args{components} };
-        }
-
-        for my $re_opt (qw/constraint exclude/) {
-            $extra_args{$re_opt} = qr/$extra_args{$re_opt}/
-                if exists $extra_args{$re_opt};
-        }
-
-        if (exists $extra_args{moniker_map}) {
-            die "The moniker_map option is not currently supported by this helper, please write your own DBIx::Class::Schema::Loader script if you need it."
-        }
-
-        make_schema_at(
-            $schema_class,
-            {
-                relationships => 1,
-                (%extra_args ? %extra_args : ()),
-                (!$compatible ? (
-                    use_namespaces => 1
-                ) : ()),
-                (@components ? (
-                    components => \@components
-                ) : ())
-            },
-            \@loader_connect_info,
-        );
+        $helper_connect_info{$key} = $self->_quote_unless_struct($val);
     }
 
-    my $file = $helper->{file};
-    $helper->render_file( 'compclass', $file );
+    \%helper_connect_info
+}
+
+sub _data_struct_to_string {
+    my ($self, $data) = @_;
+
+    local $Data::Dumper::Terse = 1;
+    local $Data::Dumper::Quotekeys = 0;
+    local $Data::Dumper::Indent = 0;
+    local $Data::Dumper::Useqq = 1;
+
+    return Data::Dumper->Dump([$data]);
+}
+
+sub _parse_connect_info {
+    my ($self, $connect_info) = @_;
+
+    my @connect_info = @$connect_info;
+
+    my ($dsn, $user, $password) = splice @connect_info, 0, 3;
+
+    tie my %connect_info, 'Tie::IxHash';
+    @connect_info{qw/dsn user password/} = ($dsn, $user, $password);
+
+    for (@connect_info) {
+        if (/^\s*{.*}\s*\z/) {
+            my $hash = eval $_;
+            die "Syntax errorr in connect_info hash: $_: $@" if $@;
+
+            %connect_info = (%connect_info, %$hash);
+
+            next;
+        }
+
+        my ($key, $val) = split /=/, $_, 2;
+
+        $connect_info{$key} = eval $val;
+        die "syntax error for connect_info key '$key' with value '$val': $@"
+            if $@;
+    }
+
+    $self->connect_info(\%connect_info);
+
+    \%connect_info
+}
+
+sub _quote_unless_struct {
+    my ($self, $val) = @_;
+
+    $val = qq{'$val'} if $val !~ /^\s*[[{]/;
+
+    $val;
+}
+
+sub _gen_dynamic_schema {
+    my $self = shift;
+
+    my $helper = $self->helper;
+
+    my @schema_parts = split(/\:\:/, $self->schema_class);
+    my $schema_file_part = pop @schema_parts;
+
+    my $schema_dir  = File::Spec->catfile(
+        $helper->{base}, 'lib', @schema_parts
+    );
+    my $schema_file = File::Spec->catfile(
+        $schema_dir, $schema_file_part . '.pm'
+    );
+
+    $helper->mk_dir($schema_dir);
+    $helper->render_file('schemaclass', $schema_file);
+}
+
+sub _gen_static_schema {
+    my $self = shift;
+
+    die "cannot load schema without connect info" unless $self->connect_info;
+
+    my $helper = $self->helper;
+
+    my $schema_dir = File::Spec->catfile($helper->{base}, 'lib');
+
+    DBIx::Class::Schema::Loader->use(
+        "dump_to_dir:$schema_dir", 'make_schema_at'
+    ) or croak "Cannot load DBIx::Class::Schema::Loader: $@";
+
+    make_schema_at(
+        $self->schema_class,
+        $self->loader_args,
+        [$self->connect_info]
+    );
+}
+
+sub _is_old_schema {
+    my $self = shift;
+
+    return $self->_old_schema if defined $self->_old_schema;
+
+    my @schema_pm   = split '::', $self->schema_class;
+    $schema_pm[-1] .= '.pm';
+    my $schema_file =
+    File::Spec->catfile($self->helper->{base}, 'lib', @schema_pm);
+
+    if (-f $schema_file) {
+        my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
+        $self->_old_schema(1) if $schema_code =~ /->load_classes/;
+    } else {
+        $self->_old_schema(0);
+    }
+
+    return $self->_old_schema;
+}
+
+sub _gen_model {
+    my $self = shift;
+    my $helper = $self->helper;
+
+    $helper->render_file('compclass', $helper->{file} );
 }
 
 =head1 SEE ALSO
@@ -225,13 +433,15 @@ use strict;
 use base qw/DBIx::Class::Schema::Loader/;
 
 __PACKAGE__->loader_options(
-    relationships => 1,
-    # debug => 1,
+    [%- FOREACH key = loader_args.keys %]
+    [% key %] => [% loader_args.${key} %],
+    [%- END -%]
+
 );
 
 =head1 NAME
 
-[% schema_class %] - DBIx::Class::Schema::Loader class
+[% schema_class %] - L<DBIx::Class::Schema::Loader> class
 
 =head1 SYNOPSIS
 
@@ -239,11 +449,15 @@ See L<[% app %]>
 
 =head1 DESCRIPTION
 
-Generated by L<Catalyst::Model::DBIC::Schema> for use in L<[% class %]>
+Dynamic L<DBIx::Class::Schema::Loader> schema for use in L<[% class %]>
+
+=head1 GENERATED BY
+
+[% generator %] - [% generator_version %]
 
 =head1 AUTHOR
 
-[% author %]
+[% author.replace(',+$', '') %]
 
 =head1 LICENSE
 
@@ -262,15 +476,18 @@ use base 'Catalyst::Model::DBIC::Schema';
 
 __PACKAGE__->config(
     schema_class => '[% schema_class %]',
-    [% IF setup_connect_info %]connect_info => [
-        [% FOREACH arg = connect_info %][% arg %],
-        [% END %]
-    ],[% END %]
+    [% IF setup_connect_info %]connect_info => {
+        [%- FOREACH key = connect_info.keys %]
+        [% key %] => [% connect_info.${key} %],
+        [%- END -%]
+
+    }[% END %]
 );
 
 =head1 NAME
 
 [% class %] - Catalyst DBIC Schema Model
+
 =head1 SYNOPSIS
 
 See L<[% app %]>
@@ -279,9 +496,13 @@ See L<[% app %]>
 
 L<Catalyst::Model::DBIC::Schema> Model using schema L<[% schema_class %]>
 
+=head1 GENERATED BY
+
+[% generator %] - [% generator_version %]
+
 =head1 AUTHOR
 
-[% author %]
+[% author.replace(',+$', '') %]
 
 =head1 LICENSE
 
