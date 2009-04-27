@@ -380,9 +380,9 @@ Used often for debugging and controlling transactions.
 
 =cut
 
-class_has 'composed_schema' => (is => 'rw');
+class_has 'composed_schema' => (is => 'rw', isa => 'DBIx::Class::Schema');
 
-has 'schema' => (is => 'rw');
+has 'schema' => (is => 'rw', isa => 'DBIx::Class::Schema');
 
 has 'schema_class' => (
     is => 'ro',
@@ -391,17 +391,17 @@ has 'schema_class' => (
     required => 1
 );
 
-has 'storage_type' => (is => 'ro');
+has 'storage_type' => (is => 'ro', isa => 'Str');
 
 has 'connect_info' => (is => 'ro', isa => ConnectInfo, coerce => 1);
 
 # ref $self changes to anon after roles are applied, and _original_class_name is
-# broken in MX::O::P
+# broken in MX::O::P 0.0009
 has '_class_name' => (is => 'ro', isa => 'ClassName', default => sub {
     ref shift
 });
 
-has 'model_name' => (is => 'ro', default => sub {
+has 'model_name' => (is => 'ro', isa => 'Str', default => sub {
     my $self = shift;
 
     my $class = ref $self;
@@ -509,6 +509,10 @@ L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>
 =head1 AUTHOR
 
 Brandon L Black, C<blblack@gmail.com>
+
+Contributors:
+
+Rafael Kitover, C<<rkitover at cpan.org>>
 
 =head1 COPYRIGHT
 

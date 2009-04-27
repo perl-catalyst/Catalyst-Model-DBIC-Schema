@@ -41,7 +41,7 @@ seconds you want the query results to be cached for, eg.:
 
   $c->model('DB::Table')->search({ foo => 'bar' }, { cache_for => 18000 });
 
-=bead1 CONFIG PARAMETERS
+=head1 CONFIG PARAMETERS
 
 =over 4
 

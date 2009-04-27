@@ -25,8 +25,9 @@ Catalyst::Helper::Model::DBIC::Schema - Helper for DBIC Schema Models
 =head1 SYNOPSIS
 
   script/create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass \
-    [ create=dynamic | create=static ] [ Schema::Loader opts ] \
-    [ dsn user pass ] [ other connect_info arguments ]
+    [ create=dynamic | create=static ] [ roles=role1,role2... ] \
+    [ Schema::Loader opts ] [ dsn user pass ] \
+    [ other connect_info args ]
 
 =head1 DESCRIPTION
 
@@ -55,6 +56,11 @@ A Schema/Model pair generated this way will not require
 L<DBIx::Class::Schema::Loader> at runtime, and will not automatically
 adapt itself to changes in your database structure.  You can edit
 the generated classes by hand to refine them.
+
+C<roles> is the list of roles to apply to the model, see
+L<Catalyst::Model::DBIC::Schema> for details.
+
+C<Schema::Loader opts> are described in L</TYPICAL EXAMPLES> below.
 
 C<connect_info> arguments are the same as what
 DBIx::Class::Schema::connect expects, and are storage_type-specific.
@@ -120,9 +126,16 @@ sub mk_compclass {
     $self->helper($helper);
 
     my $create = '';
-    if ($args[0] && $args[0] =~ /^create=(dynamic|static)$/) {
+    if ($args[0] && $args[0] =~ /^create=(dynamic|static)\z/) {
         $create = $1;
         shift @args;
+
+        if ($args[0] && $args[0] =~ /^roles=(.*)\z/) {
+            $helper->{roles} = '['
+                .(join ',' => map { qq{'$_'} } (split /,/ => $1))
+                .']';
+            shift @args;
+        }
 
         if (@args) {
             $self->_parse_loader_args(\@args);
@@ -416,6 +429,10 @@ L<DBIx::Class::Schema::Loader>, L<Catalyst::Model::DBIC::Schema>
 
 Brandon L Black, C<blblack@gmail.com>
 
+Contributors:
+
+Rafael Kitover, C<<rkitover at cpan.org>>
+
 =head1 LICENSE
 
 This library is free software, you can redistribute it and/or modify
@@ -479,6 +496,7 @@ use base 'Catalyst::Model::DBIC::Schema';
 
 __PACKAGE__->config(
     schema_class => '[% schema_class %]',
+    [% IF roles %]roles => [% roles %],[% END %]
     [% IF setup_connect_info %]connect_info => {
         [%- FOREACH key = connect_info.keys %]
         [% key %] => [% connect_info.${key} %],
