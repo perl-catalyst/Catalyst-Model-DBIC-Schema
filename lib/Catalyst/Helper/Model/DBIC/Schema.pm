@@ -103,6 +103,9 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
 
 =head2 mk_compclass
 
+This is called by L<Catalyst::Helper> with the commandline args to generate the
+files.
+
 =cut
 
 sub mk_compclass {
@@ -157,7 +160,7 @@ sub _parse_loader_args {
         next if $key =~ /^(?:components|constraint|exclude)\z/;
 
         $loader_args{$key} = eval $val;
-        die "syntax error for loader args key '$key' with value '$val': $@"
+        croak "syntax error for loader args key '$key' with value '$val': $@"
             if $@;
     }
 
@@ -254,7 +257,7 @@ sub _build_helper_connect_info {
     for (@connect_info) {
         if (/^\s*{.*}\s*\z/) {
             my $hash = eval $_;
-            die "Syntax errorr in connect_info hash: $_: $@" if $@;
+            croak "Syntax errorr in connect_info hash: $_: $@" if $@;
             my %hash = %$hash;
 
             for my $key (keys %hash) {
@@ -304,7 +307,7 @@ sub _parse_connect_info {
     for (@connect_info) {
         if (/^\s*{.*}\s*\z/) {
             my $hash = eval $_;
-            die "Syntax errorr in connect_info hash: $_: $@" if $@;
+            croak "Syntax errorr in connect_info hash: $_: $@" if $@;
 
             %connect_info = (%connect_info, %$hash);
 
@@ -314,7 +317,7 @@ sub _parse_connect_info {
         my ($key, $val) = split /=/, $_, 2;
 
         $connect_info{$key} = eval $val;
-        die "syntax error for connect_info key '$key' with value '$val': $@"
+        croak "syntax error for connect_info key '$key' with value '$val': $@"
             if $@;
     }
 
@@ -353,7 +356,7 @@ sub _gen_dynamic_schema {
 sub _gen_static_schema {
     my $self = shift;
 
-    die "cannot load schema without connect info" unless $self->connect_info;
+    croak "cannot load schema without connect info" unless $self->connect_info;
 
     my $helper = $self->helper;
 

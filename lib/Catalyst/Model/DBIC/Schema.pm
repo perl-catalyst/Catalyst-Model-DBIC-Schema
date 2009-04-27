@@ -1,25 +1,24 @@
 package Catalyst::Model::DBIC::Schema;
 
-use strict;
-use warnings;
+use Moose;
 no warnings 'uninitialized';
 
 our $VERSION = '0.24';
 
-use parent qw/Catalyst::Model Class::Accessor::Fast Class::Data::Accessor/;
-use MRO::Compat;
 use mro 'c3';
-use UNIVERSAL::require;
-use Carp;
+extends 'Catalyst::Model';
+with 'MooseX::Object::Pluggable';
+
+use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
 use Scalar::Util 'reftype';
-use namespace::clean -except => 'meta';
+use MooseX::ClassAttribute;
+use Moose::Autobox;
 
-__PACKAGE__->mk_classaccessor('composed_schema');
-__PACKAGE__->mk_accessors(qw/
-    schema connect_info schema_class storage_type caching model_name
-/);
+use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfo SchemaClass/;
+
+use namespace::clean -except => 'meta';
 
 =head1 NAME
 
@@ -283,6 +282,7 @@ supported:
       pg_enable_utf8 => 1,
     },
     {
+      auto_savepoint => 1,
       on_connect_do => [
         'some SQL statement',
         'another SQL statement',
@@ -290,25 +290,35 @@ supported:
     }
   ]
 
-=item caching
+=item roles
 
-Whether or not to enable caching support using L<DBIx::Class::Cursor::Cached>
-and L<Catalyst::Plugin::Cache>. Enabled by default.
+Array of Roles to apply at BUILD time. Roles are relative to the
+C<<MyApp::Model::DB::Role::> then C<<Catalyst::Model::DBIC::Schema::Role::>>
+namespaces, unless prefixed with C<+> in which case they are taken to be a
+fully qualified name. E.g.:
 
-In order for this to work, L<Catalyst::Plugin::Cache> must be configured and
-loaded. A possible configuration would look like this:
+    roles Caching
+    roles +MyApp::DB::Role::Foo
 
-  <Plugin::Cache>
-    <backend>       
-      class Cache::FastMmap
-      unlink_on_exit 1
-    </backend>
-  </Plugin::Cache>
+This is done using L<MooseX::Object::Pluggable>.
 
-Then in your queries, set the C<cache_for> ResultSet attribute to the number of
-seconds you want the query results to be cached for, eg.:
+A new instance is created at application time, so any consumed required
+attributes, coercions and modifiers will work.
 
-  $c->model('DB::Table')->search({ foo => 'bar' }, { cache_for => 18000 });
+Roles are applied before setup, schema and connection are set, and have a chance
+to modify C<connect_info>.
+
+C<ref $self> will not be what you expect.
+
+WARNING: you cannot modify C<new>, modify C<setup> instead.
+
+Roles that come with the distribution:
+
+=over 4
+
+=item L<Catalyst::Model::DBIC::Schema::Role::Caching>
+
+=back
 
 =item storage_type
 
@@ -370,20 +380,42 @@ Used often for debugging and controlling transactions.
 
 =cut
 
-sub new {
-    my $self = shift->next::method(@_);
-    
+class_has 'composed_schema' => (is => 'rw');
+
+has 'schema' => (is => 'rw');
+
+has 'schema_class' => (
+    is => 'ro',
+    isa => SchemaClass,
+    coerce => 1,
+    required => 1
+);
+
+has 'storage_type' => (is => 'ro');
+
+has 'connect_info' => (is => 'ro', isa => ConnectInfo, coerce => 1);
+
+# ref $self changes to anon after roles are applied, and _original_class_name is
+# broken in MX::O::P
+has '_class_name' => (is => 'ro', isa => 'ClassName', default => sub {
+    ref shift
+});
+
+has 'model_name' => (is => 'ro', default => sub {
+    my $self = shift;
+
     my $class = ref $self;
+    (my $model_name = $class) =~ s/^[\w:]+::(?:Model|M):://;
 
-    $self->_build_model_name;
+    $model_name
+});
 
-    croak "->config->{schema_class} must be defined for this model"
-        unless $self->schema_class;
+has 'roles' => (is => 'ro', isa => 'ArrayRef|Str');
 
+sub BUILD {
+    my $self = shift;
+    my $class = ref $self;
     my $schema_class = $self->schema_class;
-
-    $schema_class->require
-        or croak "Cannot load schema class '$schema_class': $@";
 
     if( !$self->connect_info ) {
         if($schema_class->storage && $schema_class->storage->connect_info) {
@@ -397,6 +429,18 @@ sub new {
         }
     }
 
+    if (exists $self->connect_info->{cursor_class}) {
+        eval { Class::MOP::load_class($self->connect_info->{cursor_class}) }
+            or croak "invalid connect_info: Cannot load your cursor_class"
+        . " ".$self->connect_info->{cursor_class}.": $@";
+    }
+
+    $self->_plugin_ns('Role');
+
+    $self->load_plugins($self->roles->flatten) if $self->roles;
+
+    $self->setup;
+
     $self->composed_schema($schema_class->compose_namespace($class));
 
     $self->schema($self->composed_schema->clone);
@@ -404,15 +448,9 @@ sub new {
     $self->schema->storage_type($self->storage_type)
         if $self->storage_type;
 
-    $self->_normalize_connect_info;
-
-    $self->_setup_caching;
-
     $self->schema->connection($self->connect_info);
 
     $self->_install_rs_models;
-
-    return $self;
 }
 
 sub clone { shift->composed_schema->clone(@_); }
@@ -421,81 +459,26 @@ sub connect { shift->composed_schema->connect(@_); }
 
 sub storage { shift->schema->storage(@_); }
 
-=item ACCEPT_CONTEXT
+=item setup
 
-Sets up runtime cache support on $c->model invocation.
+Called at C<<BUILD>> time, for modifying in roles/subclasses.
 
 =cut
 
-sub ACCEPT_CONTEXT {
-    my ($self, $c) = @_;
+sub setup { 1 }
 
-    return $self unless 
-        $self->caching;
-    
-    unless ($c->can('cache') && ref $c->cache) {
-        $c->log->debug("DBIx::Class cursor caching disabled, you don't seem to"
-            . " have a working Cache plugin.");
-        $self->caching(0);
-        $self->_reset_cursor_class;
-        return $self;
-    }
+=item ACCEPT_CONTEXT
 
-    if (ref $self->schema->default_resultset_attributes) {
-        $self->schema->default_resultset_attributes->{cache_object} =
-            $c->cache;
-    } else {
-        $self->schema->default_resultset_attributes({
-            cache_object => $c->cache
-        });
-    }
+Point of extension for doing things at C<<$c->model>> time, returns the model
+instance, see L<Catalyst::Manual::Intro> for more information.
 
-    $self;
-}
+=cut
 
-sub _normalize_connect_info {
-    my $self = shift;
-
-    my $connect_info = $self->connect_info;
-
-    my @connect_info = reftype $connect_info eq 'ARRAY' ?
-        @$connect_info : $connect_info;
-
-    my %connect_info;
-
-    if (!ref $connect_info[0]) { # array style
-        @connect_info{qw/dsn user password/} =
-            splice @connect_info, 0, 3;
-
-        for my $i (0..1) {
-            my $extra = shift @connect_info;
-            last unless $extra;
-            croak "invalid connect_info" unless reftype $extra eq 'HASH';
-
-            %connect_info = (%connect_info, %$extra);
-        }
-
-        croak "invalid connect_info" if @connect_info;
-    } elsif (@connect_info == 1 && reftype $connect_info[0] eq 'HASH') {
-        %connect_info = %{ $connect_info[0] };
-    } elsif (reftype $connect_info eq 'HASH') {
-        %connect_info = %$connect_info;
-    } else {
-        croak "invalid connect_info";
-    }
-
-    if (exists $connect_info{cursor_class}) {
-        $connect_info{cursor_class}->require
-            or croak "invalid connect_info: Cannot load your cursor_class"
-                     . " $connect_info{cursor_class}: $@";
-    }
-
-    $self->connect_info(\%connect_info);
-}
+sub ACCEPT_CONTEXT { shift }
 
 sub _install_rs_models {
     my $self  = shift;
-    my $class = ref $self;
+    my $class = $self->_class_name;
 
     no strict 'refs';
     foreach my $moniker ($self->schema->sources) {
@@ -507,54 +490,7 @@ sub _install_rs_models {
     }
 }
 
-sub _build_model_name {
-    my $self = shift;
-
-    my $class = ref $self;
-    my $model_name = $class;
-    $model_name =~ s/^[\w:]+::(?:Model|M):://;
-
-    $self->model_name($model_name);
-}
-
-sub _setup_caching {
-    my $self = shift;
-
-    return if defined $self->caching && !$self->caching;
-
-    $self->caching(0);
-
-    if (my $cursor_class = $self->connect_info->{cursor_class}) {
-        unless ($cursor_class->can('clear_cache')) {
-            carp "Caching disabled, cursor_class $cursor_class does not"
-                 . " support it.";
-            return;
-        }
-    } else {
-        my $cursor_class = 'DBIx::Class::Cursor::Cached';
-
-        unless ($cursor_class->require) {
-            carp "Caching disabled, cannot load $cursor_class: $@";
-            return;
-        }
-
-        $self->connect_info->{cursor_class} = $cursor_class;
-    }
-
-    $self->caching(1);
-
-    1;
-}
-
-sub _reset_cursor_class {
-    my $self = shift;
-
-    if ($self->connect_info->{cursor_class} eq 'DBIx::Class::Cursor::Cached') {
-        $self->storage->cursor_class('DBIx::Class::Storage::DBI::Cursor');
-    }
-    
-    1;
-}
+__PACKAGE__->meta->make_immutable;
 
 =back
 
