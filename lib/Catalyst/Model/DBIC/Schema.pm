@@ -1,13 +1,11 @@
 package Catalyst::Model::DBIC::Schema;
 
 use Moose;
-no warnings 'uninitialized';
-
-our $VERSION = '0.24';
-
 use mro 'c3';
 extends 'Catalyst::Model';
 with 'MooseX::Object::Pluggable';
+
+our $VERSION = '0.24';
 
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
@@ -241,6 +239,7 @@ Or using L<Config::General>:
 
     <Model::FilmDB>
         schema_class   MyApp::Schema::FilmDB
+        roles Caching
         <connect_info>
             dsn   dbi:Pg:dbname=mypgdb
             user   postgres
@@ -308,9 +307,11 @@ attributes, coercions and modifiers will work.
 Roles are applied before setup, schema and connection are set, and have a chance
 to modify C<connect_info>.
 
-C<ref $self> will not be what you expect.
+C<ref $self> will be an anon class if any roles are applied.
 
-WARNING: you cannot modify C<new>, modify C<setup> instead.
+You cannot modify C<new> or C<BUILD>, modify C<setup> instead.
+
+L</ACCEPT_CONTEXT> can also be modified.
 
 Roles that come with the distribution:
 
@@ -504,7 +505,8 @@ L<Catalyst::Response>, L<Catalyst::Helper>, L<Catalyst>,
 Stuff related to DBIC and this Model style:
 
 L<DBIx::Class>, L<DBIx::Class::Schema>,
-L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>
+L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
+L<MooseX::Object::Pluggable>
 
 =head1 AUTHOR
 

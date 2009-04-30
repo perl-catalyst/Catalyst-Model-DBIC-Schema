@@ -1,22 +1,16 @@
 package Catalyst::Helper::Model::DBIC::Schema;
 
-use strict;
-use warnings;
+use Moose;
 no warnings 'uninitialized';
 
 our $VERSION = '0.24';
 
-use parent 'Class::Accessor::Fast';
-
 use Carp;
-use UNIVERSAL::require;
 use Tie::IxHash ();
 use Data::Dumper ();
 use List::Util ();
 
-__PACKAGE__->mk_accessors(qw/
-  helper schema_class loader_args connect_info _old_schema
-/);
+use namespace::clean -except => 'meta';
 
 =head1 NAME
 
@@ -105,6 +99,31 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
   #  in your app config, or [not recommended] in the schema itself).
   script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass
 
+=cut
+
+has helper => (is => 'ro', isa => 'Catalyst::Helper', required => 1);
+
+has schema_class => (is => 'ro', isa => 'Str', required => 1);
+
+has loader_args => (is => 'rw', isa => 'HashRef');
+has connect_info => (is => 'rw', isa => 'HashRef');
+
+has old_schema => (is => 'rw', isa => 'Bool', lazy => 1, default => sub {
+    my $self = shift;
+
+    my @schema_pm   = split '::', $self->schema_class;
+    $schema_pm[-1] .= '.pm';
+    my $schema_file =
+    File::Spec->catfile($self->helper->{base}, 'lib', @schema_pm);
+
+    if (-f $schema_file) {
+        my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
+        return 1 if $schema_code =~ /->load_classes/;
+    }
+
+    0;
+});
+
 =head1 METHODS
 
 =head2 mk_compclass
@@ -117,13 +136,10 @@ files.
 sub mk_compclass {
     my ($package, $helper, $schema_class, @args) = @_;
 
-    my $self = $package->new;
+    my $self = $package->new(helper => $helper, schema_class => $schema_class);
 
     $helper->{schema_class} = $schema_class
         or croak "Must supply schema class name";
-
-    $self->schema_class($schema_class);
-    $self->helper($helper);
 
     my $create = '';
     if ($args[0] && $args[0] =~ /^create=(dynamic|static)\z/) {
@@ -144,7 +160,7 @@ sub mk_compclass {
                 $helper->{setup_connect_info} = 1;
 
                 $helper->{connect_info} =
-                $self->_build_helper_connect_info(\@args);
+                    $self->_build_helper_connect_info(\@args);
 
                 $self->_parse_connect_info(\@args) if $create eq 'static';
             }
@@ -190,7 +206,7 @@ sub _parse_loader_args {
     %result = (
         relationships => 1,
         (%loader_args ? %loader_args : ()),
-        (!$self->_is_old_schema ? (
+        (!$self->old_schema ? (
                 use_namespaces => 1
             ) : ()),
         (@components ? (
@@ -242,7 +258,7 @@ sub _build_helper_loader_args {
 sub _build_loader_components {
     my ($self, $components) = @_;
 
-    my @components = $self->_is_old_schema ? () : ('InflateColumn::DateTime');
+    my @components = $self->old_schema ? () : ('InflateColumn::DateTime');
 
     if ($components) {
         $components = [ $components ] if !ref $components;
@@ -375,35 +391,18 @@ sub _gen_static_schema {
 
     my $schema_dir = File::Spec->catfile($helper->{base}, 'lib');
 
-    DBIx::Class::Schema::Loader->use(
+    eval { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
+    croak "Cannot load DBIx::Class::Schema::Loader: $@" if $@;
+
+    DBIx::Class::Schema::Loader->import(
         "dump_to_dir:$schema_dir", 'make_schema_at'
-    ) or croak "Cannot load DBIx::Class::Schema::Loader: $@";
+    );
 
     make_schema_at(
         $self->schema_class,
         $self->loader_args,
         [$self->connect_info]
     );
-}
-
-sub _is_old_schema {
-    my $self = shift;
-
-    return $self->_old_schema if defined $self->_old_schema;
-
-    my @schema_pm   = split '::', $self->schema_class;
-    $schema_pm[-1] .= '.pm';
-    my $schema_file =
-    File::Spec->catfile($self->helper->{base}, 'lib', @schema_pm);
-
-    if (-f $schema_file) {
-        my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
-        $self->_old_schema(1) if $schema_code =~ /->load_classes/;
-    } else {
-        $self->_old_schema(0);
-    }
-
-    return $self->_old_schema;
 }
 
 sub _gen_model {
