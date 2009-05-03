@@ -2,7 +2,7 @@ package Catalyst::Model::DBIC::Schema::Role::Replicated;
 
 use Moose::Role;
 use Moose::Autobox;
-use Carp::Clan '^Catalyst::Model::DBIC::Schema';
+use Carp::Clan '^Catalyst::Model::DBIC::Schema::';
 
 use Catalyst::Model::DBIC::Schema::Types 'ConnectInfos';
 
@@ -60,12 +60,14 @@ after setup => sub {
     } else {
         $self->storage_type('::DBI::Replicated');
     }
+
+    $self->connect_info->{balancer_type} ||= '::Random';
 };
 
 after finalize => sub {
     my $self = shift;
 
-    $self->storage->connect_replicants($self->replicants->flatten);
+    $self->storage->connect_replicants(map [ $_ ], $self->replicants->flatten);
 };
 
 =head1 SEE ALSO

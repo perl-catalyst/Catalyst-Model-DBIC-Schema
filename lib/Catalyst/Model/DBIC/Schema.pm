@@ -7,7 +7,7 @@ with 'MooseX::Object::Pluggable';
 
 our $VERSION = '0.24';
 
-use Carp::Clan '^Catalyst::Model::DBIC::Schema';
+use Carp::Clan '^Catalyst::Model::DBIC::Schema::';
 use Data::Dumper;
 use DBIx::Class ();
 use Scalar::Util 'reftype';
@@ -418,7 +418,7 @@ sub BUILD {
             $self->connect_info($schema_class->storage->connect_info);
         }
         else {
-            croak "Either ->config->{connect_info} must be defined for $class"
+            die "Either ->config->{connect_info} must be defined for $class"
                   . " or $schema_class must have connect info defined on it."
 		  . " Here's what we got:\n"
 		  . Dumper($self);
@@ -487,7 +487,13 @@ sub _install_rs_models {
     my $class = $self->_class_name;
 
     no strict 'refs';
-    foreach my $moniker ($self->schema->sources) {
+
+    my @sources = $self->schema->sources;
+
+    die "No sources found (did you forget to define your tables?)"
+        unless @sources;
+
+    foreach my $moniker (@sources) {
         my $classname = "${class}::$moniker";
         *{"${classname}::ACCEPT_CONTEXT"} = sub {
             shift;

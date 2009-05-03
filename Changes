@@ -1,5 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - warn on empty schema
         - create=dynamic deprecation warning
         - conversion to Moose (of Model, helper to follow)
         - cursor caching support (via ::Role::Caching)

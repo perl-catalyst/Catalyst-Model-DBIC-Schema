@@ -3,10 +3,10 @@ package Catalyst::Model::DBIC::Schema::Types;
 use MooseX::Types
     -declare => [qw/ConnectInfo ConnectInfos Replicants SchemaClass/];
 
+use Carp::Clan '^Catalyst::Model::DBIC::Schema::';
 use MooseX::Types::Moose qw/ArrayRef HashRef Str ClassName/;
 use Scalar::Util 'reftype';
 use List::MoreUtils 'all';
-use Carp;
 
 use namespace::clean -except => 'meta';
 
@@ -57,16 +57,16 @@ sub _coerce_connect_info_from_arrayref {
         for my $i (0..1) {
             my $extra = shift @$_;
             last unless $extra;
-            croak "invalid connect_info" unless reftype $extra eq 'HASH';
+            die "invalid connect_info" unless reftype $extra eq 'HASH';
 
             %connect_info = (%connect_info, %$extra);
         }
 
-        croak "invalid connect_info" if @$_;
+        die "invalid connect_info" if @$_;
     } elsif (@$_ == 1 && reftype $_->[0] eq 'HASH') {
         return $_->[0];
     } else {
-        croak "invalid connect_info";
+        die "invalid connect_info";
     }
 
     \%connect_info;
