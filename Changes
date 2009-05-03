@@ -1,7 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - create=dynamic deprecation warning
         - conversion to Moose (of Model, helper to follow)
-        - cursor caching support (via role)
+        - cursor caching support (via ::Role::Caching)
         - switch to hashref connect_info for DBIC 8100
         - better helper option parsing
         - pass loader opts to dynamic schemas

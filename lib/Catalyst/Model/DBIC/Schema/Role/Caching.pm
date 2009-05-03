@@ -8,7 +8,7 @@ use namespace::clean -except => 'meta';
 =head1 NAME
 
 Catalyst::Model::DBIC::Schema::Role::Caching - Query caching support for
-DBIx::Class
+Catalyst::Model::DBIC::Schema
 
 =head1 SYNOPSIS
 
@@ -43,17 +43,13 @@ seconds you want the query results to be cached for, eg.:
 
 =head1 CONFIG PARAMETERS
 
-=over 4
-
-=item caching
+=head2 caching
 
 Turn caching on or off, you can use:
 
     $c->model('DB')->caching(0);
 
 to disable caching at runtime.
-
-=back
 
 =cut
 
@@ -112,12 +108,10 @@ before ACCEPT_CONTEXT => sub {
 
 =head1 METHODS
 
-=over 4
-
-=item _reset_cursor_class
+=head2 _reset_cursor_class
 
 Reset the cursor class to L<DBIx::Class::Storage::DBI::Cursor> if it's set to
-L<DBIx::Class::Cursor::Cached>.
+L<DBIx::Class::Cursor::Cached>, if possible.
 
 =cut
 
@@ -125,13 +119,12 @@ sub _reset_cursor_class {
     my $self = shift;
 
     if ($self->connect_info->{cursor_class} eq 'DBIx::Class::Cursor::Cached') {
-        $self->storage->cursor_class('DBIx::Class::Storage::DBI::Cursor');
+        $self->storage->cursor_class('DBIx::Class::Storage::DBI::Cursor')
+            if $self->storage->can('cursor_class');
     }
     
     1;
 }
-
-=back
 
 =head1 SEE ALSO
 

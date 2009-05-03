@@ -184,15 +184,13 @@ for more info.
 
 =head1 CONFIG PARAMETERS
 
-=over 4
-
-=item schema_class
+=head2 schema_class
 
 This is the classname of your L<DBIx::Class::Schema> Schema.  It needs
 to be findable in C<@INC>, but it does not need to be inside the 
 C<Catalyst::Model::> namespace.  This parameter is required.
 
-=item connect_info
+=head2 connect_info
 
 This is an arrayref of connection parameters, which are specific to your
 C<storage_type> (see your storage type documentation for more details). 
@@ -289,7 +287,7 @@ supported:
     }
   ]
 
-=item roles
+=head2 roles
 
 Array of Roles to apply at BUILD time. Roles are relative to the
 C<<MyApp::Model::DB::Role::> then C<<Catalyst::Model::DBIC::Schema::Role::>>
@@ -304,14 +302,13 @@ This is done using L<MooseX::Object::Pluggable>.
 A new instance is created at application time, so any consumed required
 attributes, coercions and modifiers will work.
 
-Roles are applied before setup, schema and connection are set, and have a chance
-to modify C<connect_info>.
+Roles are applied before setup, schema and connection are set.
 
 C<ref $self> will be an anon class if any roles are applied.
 
 You cannot modify C<new> or C<BUILD>, modify C<setup> instead.
 
-L</ACCEPT_CONTEXT> can also be modified.
+L</ACCEPT_CONTEXT> and L</finalize> can also be modified.
 
 Roles that come with the distribution:
 
@@ -319,62 +316,60 @@ Roles that come with the distribution:
 
 =item L<Catalyst::Model::DBIC::Schema::Role::Caching>
 
+=item L<Catalyst::Model::DBIC::Schema::Role::Replicated>
+
 =back
 
-=item storage_type
+=head2 storage_type
 
 Allows the use of a different C<storage_type> than what is set in your
 C<schema_class> (which in turn defaults to C<::DBI> if not set in current
 L<DBIx::Class>).  Completely optional, and probably unnecessary for most
 people until other storage backends become available for L<DBIx::Class>.
 
-=back
-
 =head1 METHODS
 
-=over 4
-
-=item new
+=head2 new
 
 Instantiates the Model based on the above-documented ->config parameters.
 The only required parameter is C<schema_class>.  C<connect_info> is
 required in the case that C<schema_class> does not already have connection
 information defined for it.
 
-=item schema
+=head2 schema
 
 Accessor which returns the connected schema being used by the this model.
 There are direct shortcuts on the model class itself for
 schema->resultset, schema->source, and schema->class.
 
-=item composed_schema
+=head2 composed_schema
 
 Accessor which returns the composed schema, which has no connection info,
 which was used in constructing the C<schema> above.  Useful for creating
 new connections based on the same schema/model.  There are direct shortcuts
 from the model object for composed_schema->clone and composed_schema->connect
 
-=item clone
+=head2 clone
 
 Shortcut for ->composed_schema->clone
 
-=item connect
+=head2 connect
 
 Shortcut for ->composed_schema->connect
 
-=item source
+=head2 source
 
 Shortcut for ->schema->source
 
-=item class
+=head2 class
 
 Shortcut for ->schema->class
 
-=item resultset
+=head2 resultset
 
 Shortcut for ->schema->resultset
 
-=item storage
+=head2 storage
 
 Provides an accessor for the connected schema's storage object.
 Used often for debugging and controlling transactions.
@@ -392,7 +387,7 @@ has 'schema_class' => (
     required => 1
 );
 
-has 'storage_type' => (is => 'ro', isa => 'Str');
+has 'storage_type' => (is => 'rw', isa => 'Str');
 
 has 'connect_info' => (is => 'ro', isa => ConnectInfo, coerce => 1);
 
@@ -452,6 +447,8 @@ sub BUILD {
     $self->schema->connection($self->connect_info);
 
     $self->_install_rs_models;
+
+    $self->finalize;
 }
 
 sub clone { shift->composed_schema->clone(@_); }
@@ -460,15 +457,23 @@ sub connect { shift->composed_schema->connect(@_); }
 
 sub storage { shift->schema->storage(@_); }
 
-=item setup
+=head2 setup
 
-Called at C<<BUILD>> time, for modifying in roles/subclasses.
+Called at C<<BUILD>> time before configuration.
 
 =cut
 
 sub setup { 1 }
 
-=item ACCEPT_CONTEXT
+=head2 finalize
+
+Called at the end of C<BUILD> after everything has been configured.
+
+=cut
+
+sub finalize { 1 }
+
+=head2 ACCEPT_CONTEXT
 
 Point of extension for doing things at C<<$c->model>> time, returns the model
 instance, see L<Catalyst::Manual::Intro> for more information.
@@ -493,8 +498,6 @@ sub _install_rs_models {
 
 __PACKAGE__->meta->make_immutable;
 
-=back
-
 =head1 SEE ALSO
 
 General Catalyst Stuff:
@@ -507,6 +510,11 @@ Stuff related to DBIC and this Model style:
 L<DBIx::Class>, L<DBIx::Class::Schema>,
 L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
 L<MooseX::Object::Pluggable>
+
+Roles:
+
+L<Catalyst::Model::DBIC::Schema::Role::Caching>,
+L<Catalyst::Model::DBIC::Schema::Role::Replicated>
 
 =head1 AUTHOR
 

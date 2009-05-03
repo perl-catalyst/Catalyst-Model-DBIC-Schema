@@ -8,7 +8,7 @@ our $VERSION = '0.24';
 use Carp;
 use Tie::IxHash ();
 use Data::Dumper ();
-use List::Util ();
+use List::Util 'first';
 
 use namespace::clean -except => 'meta';
 
@@ -139,7 +139,9 @@ sub mk_compclass {
     my $self = $package->new(helper => $helper, schema_class => $schema_class);
 
     $helper->{schema_class} = $schema_class
-        or croak "Must supply schema class name";
+        or die "Must supply schema class name";
+
+    @args = $self->_cleanup_args(\@args);
 
     my $create = '';
     if ($args[0] && $args[0] =~ /^create=(dynamic|static)\z/) {
@@ -156,7 +158,7 @@ sub mk_compclass {
         if (@args) {
             $self->_parse_loader_args(\@args);
 
-            if (List::Util::first { /dbi:/ } @args) {
+            if (first { /^dbi:/i } @args) {
                 $helper->{setup_connect_info} = 1;
 
                 $helper->{connect_info} =
@@ -171,6 +173,7 @@ sub mk_compclass {
     $helper->{generator_version} = $VERSION;
 
     if ($create eq 'dynamic') {
+        $self->_print_dynamic_deprecation_warning;
         $self->helper->{loader_args} = $self->_build_helper_loader_args;
         $self->_gen_dynamic_schema;
     } elsif ($create eq 'static') {
@@ -189,7 +192,7 @@ sub _parse_loader_args {
         next if $key =~ /^(?:components|constraint|exclude)\z/;
 
         $loader_args{$key} = eval $val;
-        croak "syntax error for loader args key '$key' with value '$val': $@"
+        die "syntax error for loader args key '$key' with value '$val': $@"
             if $@;
     }
 
@@ -286,7 +289,7 @@ sub _build_helper_connect_info {
     for (@connect_info) {
         if (/^\s*{.*}\s*\z/) {
             my $hash = eval $_;
-            croak "Syntax errorr in connect_info hash: $_: $@" if $@;
+            die "Syntax errorr in connect_info hash: $_: $@" if $@;
             my %hash = %$hash;
 
             for my $key (keys %hash) {
@@ -336,7 +339,7 @@ sub _parse_connect_info {
     for (@connect_info) {
         if (/^\s*{.*}\s*\z/) {
             my $hash = eval $_;
-            croak "Syntax errorr in connect_info hash: $_: $@" if $@;
+            die "Syntax errorr in connect_info hash: $_: $@" if $@;
 
             %connect_info = (%connect_info, %$hash);
 
@@ -346,7 +349,7 @@ sub _parse_connect_info {
         my ($key, $val) = split /=/, $_, 2;
 
         $connect_info{$key} = eval $val;
-        croak "syntax error for connect_info key '$key' with value '$val': $@"
+        die "syntax error for connect_info key '$key' with value '$val': $@"
             if $@;
     }
 
@@ -385,14 +388,14 @@ sub _gen_dynamic_schema {
 sub _gen_static_schema {
     my $self = shift;
 
-    croak "cannot load schema without connect info" unless $self->connect_info;
+    die "cannot load schema without connect info" unless $self->connect_info;
 
     my $helper = $self->helper;
 
     my $schema_dir = File::Spec->catfile($helper->{base}, 'lib');
 
     eval { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
-    croak "Cannot load DBIx::Class::Schema::Loader: $@" if $@;
+    die "Cannot load DBIx::Class::Schema::Loader: $@" if $@;
 
     DBIx::Class::Schema::Loader->import(
         "dump_to_dir:$schema_dir", 'make_schema_at'
@@ -410,6 +413,29 @@ sub _gen_model {
     my $helper = $self->helper;
 
     $helper->render_file('compclass', $helper->{file} );
+}
+
+sub _print_dynamic_deprecation_warning {
+    warn <<EOF;
+************************************ WARNING **********************************
+* create=dynamic is DEPRECATED, please use create=static instead.             *
+*******************************************************************************
+EOF
+    print "Continue? [y/n]: ";
+    chomp(my $response = <STDIN>);
+    exit 0 if $response =~ /^n(o)?\z/;
+}
+
+sub _cleanup_args {
+    my ($self, $args) = @_;
+
+# remove blanks, ie. someoned doing foo \  bar
+    my @res = grep !/^\s*\z/, @$args;
+
+# remove leading whitespace, ie. foo \ bar
+    s/^\s*// for @res;
+
+    @res
 }
 
 =head1 SEE ALSO
