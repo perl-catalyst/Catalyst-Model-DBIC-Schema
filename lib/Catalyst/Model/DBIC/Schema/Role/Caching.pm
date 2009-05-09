@@ -1,7 +1,7 @@
 package Catalyst::Model::DBIC::Schema::Role::Caching;
 
 use Moose::Role;
-use Carp::Clan '^Catalyst::Model::DBIC::Schema::';
+use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 
 use namespace::clean -except => 'meta';
 

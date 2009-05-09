@@ -2,7 +2,7 @@ package Catalyst::Model::DBIC::Schema::Role::Replicated;
 
 use Moose::Role;
 use Moose::Autobox;
-use Carp::Clan '^Catalyst::Model::DBIC::Schema::';
+use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 
 use Catalyst::Model::DBIC::Schema::Types 'ConnectInfos';
 
@@ -23,16 +23,25 @@ L<Catalyst::Model::DBIC::Schema>
             ['dbi:mysql:slave1', 'user', 'pass'],
             ['dbi:mysql:slave2', 'user', 'pass'],
             ['dbi:mysql:slave3', 'user', 'pass'],
-        ]
+        ],
+        balancer_args => {
+          master_read_weight => 0.3
+        }
     });
 
 =head1 DESCRIPTION
 
-B<DOES NOT WORK YET> -- requires some DBIC changes
-
 Sets your storage_type to L<DBIx::Class::Storage::DBI::Replicated> and connects
 replicants provided in config. See that module for supported resultset
 attributes.
+
+The default L<DBIx::Class::Storage::DBI::Replicated/balancer_type> is
+C<::Random>.
+
+Sets the
+L<DBIx::Class::Storage::DBI::Replicated::Balancer::Random/master_read_weight> to
+C<1> by default, meaning that you have the same chance of reading from master as
+you do from replicants. Set to C<0> to turn off reads from master.
 
 =head1 CONFIG PARAMETERS
 
@@ -61,13 +70,19 @@ after setup => sub {
         $self->storage_type('::DBI::Replicated');
     }
 
-    $self->connect_info->{balancer_type} ||= '::Random';
+    $self->connect_info->{balancer_type} ||= '::Random'
+        unless $self->connect_info->{balancer_type};
+
+    unless ($self->connect_info->{balancer_args} &&
+            exists $self->connect_info->{balancer_args}{master_read_weight}) {
+        $self->connect_info->{balancer_args}{master_read_weight} = 1;
+    }
 };
 
 after finalize => sub {
     my $self = shift;
 
-    $self->storage->connect_replicants(map [ $_ ], $self->replicants->flatten);
+    $self->storage->connect_replicants($self->replicants->flatten);
 };
 
 =head1 SEE ALSO

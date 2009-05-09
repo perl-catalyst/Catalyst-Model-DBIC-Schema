@@ -7,7 +7,7 @@ with 'MooseX::Object::Pluggable';
 
 our $VERSION = '0.24';
 
-use Carp::Clan '^Catalyst::Model::DBIC::Schema::';
+use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
 use Scalar::Util 'reftype';

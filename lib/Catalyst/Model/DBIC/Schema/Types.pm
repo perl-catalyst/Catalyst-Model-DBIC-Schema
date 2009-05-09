@@ -3,7 +3,7 @@ package Catalyst::Model::DBIC::Schema::Types;
 use MooseX::Types
     -declare => [qw/ConnectInfo ConnectInfos Replicants SchemaClass/];
 
-use Carp::Clan '^Catalyst::Model::DBIC::Schema::';
+use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use MooseX::Types::Moose qw/ArrayRef HashRef Str ClassName/;
 use Scalar::Util 'reftype';
 use List::MoreUtils 'all';

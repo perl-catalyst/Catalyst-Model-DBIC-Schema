@@ -3,8 +3,9 @@ use inc::Module::Install 0.87;
 name 'Catalyst-Model-DBIC-Schema';
 all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 
-requires 'DBIx::Class'           => '0.08100';
+requires 'DBIx::Class'           => '0.08104';
 requires 'Catalyst::Runtime'     => '5.80002';
+requires 'Moose';
 requires 'Moose::Autobox';
 requires 'MooseX::ClassAttribute';
 requires 'MooseX::Types';
@@ -23,6 +24,9 @@ feature 'Catalyst::Helper support',
 
 feature 'Caching support',
     'DBIx::Class::Cursor::Cached' => 0;
+
+feature 'Replication support',
+    'MooseX::AttributeHelpers' => 0;
 
 if(-e 'MANIFEST.SKIP') {
     system("pod2text lib/Catalyst/Model/DBIC/Schema.pm > README");
