@@ -3,8 +3,8 @@ use inc::Module::Install 0.87;
 name 'Catalyst-Model-DBIC-Schema';
 all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 
-requires 'DBIx::Class'           => '0.08104';
-requires 'Catalyst::Runtime'     => '5.80002';
+requires 'DBIx::Class'           => '0.08102';
+requires 'Catalyst::Runtime'     => '5.80003';
 requires 'Moose';
 requires 'Moose::Autobox';
 requires 'MooseX::ClassAttribute';
