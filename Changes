@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - Add tests for issues with Class::C3 which are caused to
+          applications which use new Catalyst but old DBIC, and have
+          use Class::C3 in the MyApp class (t0m)
         - warn on empty schema
         - create=dynamic deprecation warning
         - conversion to Moose (of Model, helper to follow)
