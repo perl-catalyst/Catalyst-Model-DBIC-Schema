@@ -43,6 +43,17 @@ L<DBIx::Class::Storage::DBI::Replicated::Balancer::Random/master_read_weight> to
 C<1> by default, meaning that you have the same chance of reading from master as
 you do from replicants. Set to C<0> to turn off reads from master.
 
+=head1 NOTE ON L<DBIx::Class> VERSIONS PRIOR TO 0.08103
+
+This role will work, however, any C<::Storage::Replicated> options in
+L<Catalyst::Model::DBIC::Schema/connect_info> will be ignored, master
+connect_info will not be merged to replicants, and
+L<DBIx::Class::Storage::DBI::Replicated::Balancer::First> will be used instead,
+with all your reads going only to one of your replicants. You'll also get some
+warnings. The C<Caching> role will also not work.
+
+Please upgrade.
+
 =head1 CONFIG PARAMETERS
 
 =head2 replicants
@@ -82,7 +93,7 @@ after setup => sub {
 after finalize => sub {
     my $self = shift;
 
-    $self->storage->connect_replicants($self->replicants->flatten);
+    $self->storage->connect_replicants(map [ $_ ], $self->replicants->flatten);
 };
 
 =head1 SEE ALSO
