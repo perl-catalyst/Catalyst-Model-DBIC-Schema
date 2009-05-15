@@ -348,7 +348,12 @@ sub _parse_connect_info {
 
         my ($key, $val) = split /=/, $_, 2;
 
-        $connect_info{$key} = eval $val;
+        if ($key =~ /^(?:quote_char|name_sep)\z/) {
+            $connect_info{$key} = $val;
+        } else {
+            $connect_info{$key} = eval $val;
+        }
+
         die "syntax error for connect_info key '$key' with value '$val': $@"
             if $@;
     }
@@ -430,7 +435,9 @@ sub _cleanup_args {
     my ($self, $args) = @_;
 
 # remove blanks, ie. someoned doing foo \  bar
-    my @res = grep !/^\s*\z/, @$args;
+#    my @res = grep !/^\s*\z/, @$args;
+# bad idea.
+    my @res = @$args;
 
 # remove leading whitespace, ie. foo \ bar
     s/^\s*// for @res;

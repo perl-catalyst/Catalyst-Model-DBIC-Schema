@@ -15,6 +15,7 @@ use MooseX::ClassAttribute;
 use Moose::Autobox;
 
 use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfo SchemaClass/;
+use MooseX::Types::Moose qw/ArrayRef Str ClassName/;
 
 use namespace::clean -except => 'meta';
 
@@ -387,17 +388,17 @@ has 'schema_class' => (
     required => 1
 );
 
-has 'storage_type' => (is => 'rw', isa => 'Str');
+has 'storage_type' => (is => 'rw', isa => Str);
 
 has 'connect_info' => (is => 'ro', isa => ConnectInfo, coerce => 1);
 
 # ref $self changes to anon after roles are applied, and _original_class_name is
 # broken in MX::O::P 0.0009
-has '_class_name' => (is => 'ro', isa => 'ClassName', default => sub {
+has '_class_name' => (is => 'ro', isa => ClassName, default => sub {
     ref shift
 });
 
-has 'model_name' => (is => 'ro', isa => 'Str', default => sub {
+has 'model_name' => (is => 'ro', isa => Str, default => sub {
     my $self = shift;
 
     my $class = ref $self;
@@ -406,7 +407,7 @@ has 'model_name' => (is => 'ro', isa => 'Str', default => sub {
     $model_name
 });
 
-has 'roles' => (is => 'ro', isa => 'ArrayRef|Str');
+has 'roles' => (is => 'ro', isa => ArrayRef|Str);
 
 sub BUILD {
     my $self = shift;
