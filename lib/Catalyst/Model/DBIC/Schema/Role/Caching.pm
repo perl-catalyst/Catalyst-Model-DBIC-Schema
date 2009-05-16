@@ -2,6 +2,8 @@ package Catalyst::Model::DBIC::Schema::Role::Caching;
 
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
+use Catalyst::Model::DBIC::Schema::Types 'CursorClass';
+use MooseX::Types::Moose qw/Int Str/;
 
 use namespace::clean -except => 'meta';
 
@@ -13,11 +15,10 @@ Catalyst::Model::DBIC::Schema
 =head1 SYNOPSIS
 
     __PACKAGE__->config({
-        roles => ['Caching']
-    ...
+        roles => ['Caching'],
+        connect_info => 
+            ['dbi:mysql:db', 'user', 'pass'],
     });
-
-    ...
 
     $c->model('DB::Table')->search({ foo => 'bar' }, { cache_for => 18000 });
 
@@ -49,36 +50,33 @@ Turn caching on or off, you can use:
 
     $c->model('DB')->caching(0);
 
-to disable caching at runtime.
-
 =cut
 
-has 'caching' => (is => 'rw', isa => 'Int', default => 1);
+has 'caching' => (is => 'rw', isa => Int, default => 1);
 
 after setup => sub {
     my $self = shift;
 
-    return if defined $self->caching && !$self->caching;
+    return if !$self->caching;
 
     $self->caching(0);
 
-    if (my $cursor_class = $self->connect_info->{cursor_class}) {
-        unless ($cursor_class->can('clear_cache')) {
-            carp "Caching disabled, cursor_class $cursor_class does not"
-                 . " support it.";
-            return;
-        }
-    } else {
-        my $cursor_class = 'DBIx::Class::Cursor::Cached';
+    my $cursor_class = $self->connect_info->{cursor_class}
+        || 'DBIx::Class::Cursor::Cached';
 
-        unless (eval { Class::MOP::load_class($cursor_class) }) {
-            carp "Caching disabled, cannot load $cursor_class: $@";
-            return;
-        }
-
-        $self->connect_info->{cursor_class} = $cursor_class;
+    unless (eval { Class::MOP::load_class($cursor_class) }) {
+        carp "Caching disabled, cannot load cursor class"
+            . " $cursor_class: $@";
+        return;
     }
 
+    unless ($cursor_class->can('clear_cache')) {
+        carp "Caching disabled, cursor_class $cursor_class does not"
+             . " support it.";
+        return;
+    }
+
+    $self->connect_info->{cursor_class} = $cursor_class;
     $self->caching(1);
 };
 
@@ -87,7 +85,7 @@ before ACCEPT_CONTEXT => sub {
 
     return $self unless 
         $self->caching;
-    
+
     unless ($c->can('cache') && ref $c->cache) {
         $c->log->warn("DBIx::Class cursor caching disabled, you don't seem to"
             . " have a working Cache plugin.");
@@ -105,26 +103,6 @@ before ACCEPT_CONTEXT => sub {
         });
     }
 };
-
-=head1 METHODS
-
-=head2 _reset_cursor_class
-
-Reset the cursor class to L<DBIx::Class::Storage::DBI::Cursor> if it's set to
-L<DBIx::Class::Cursor::Cached>, if possible.
-
-=cut
-
-sub _reset_cursor_class {
-    my $self = shift;
-
-    if ($self->connect_info->{cursor_class} eq 'DBIx::Class::Cursor::Cached') {
-        $self->storage->cursor_class('DBIx::Class::Storage::DBI::Cursor')
-            if $self->storage->can('cursor_class');
-    }
-    
-    1;
-}
 
 =head1 SEE ALSO
 

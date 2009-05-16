@@ -9,6 +9,7 @@ use Carp;
 use Tie::IxHash ();
 use Data::Dumper ();
 use List::Util 'first';
+use MooseX::Types::Moose qw/Str HashRef Bool/;
 
 use namespace::clean -except => 'meta';
 
@@ -103,26 +104,12 @@ Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
 
 has helper => (is => 'ro', isa => 'Catalyst::Helper', required => 1);
 
-has schema_class => (is => 'ro', isa => 'Str', required => 1);
+has schema_class => (is => 'ro', isa => Str, required => 1);
 
-has loader_args => (is => 'rw', isa => 'HashRef');
-has connect_info => (is => 'rw', isa => 'HashRef');
+has loader_args => (is => 'rw', isa => HashRef);
+has connect_info => (is => 'rw', isa => HashRef);
 
-has old_schema => (is => 'rw', isa => 'Bool', lazy => 1, default => sub {
-    my $self = shift;
-
-    my @schema_pm   = split '::', $self->schema_class;
-    $schema_pm[-1] .= '.pm';
-    my $schema_file =
-    File::Spec->catfile($self->helper->{base}, 'lib', @schema_pm);
-
-    if (-f $schema_file) {
-        my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
-        return 1 if $schema_code =~ /->load_classes/;
-    }
-
-    0;
-});
+has old_schema => (is => 'rw', isa => Bool, lazy_build => 1);
 
 =head1 METHODS
 
@@ -138,8 +125,7 @@ sub mk_compclass {
 
     my $self = $package->new(helper => $helper, schema_class => $schema_class);
 
-    $helper->{schema_class} = $schema_class
-        or die "Must supply schema class name";
+    $helper->{schema_class} = $schema_class;
 
     @args = $self->_cleanup_args(\@args);
 
@@ -315,6 +301,22 @@ sub _build_helper_connect_info {
     \%helper_connect_info
 }
 
+sub _build_old_schema {
+    my $self = shift;
+
+    my @schema_pm   = split '::', $self->schema_class;
+    $schema_pm[-1] .= '.pm';
+    my $schema_file =
+    File::Spec->catfile($self->helper->{base}, 'lib', @schema_pm);
+
+    if (-f $schema_file) {
+        my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
+        return 1 if $schema_code =~ /->load_classes/;
+    }
+
+    0;
+}
+
 sub _data_struct_to_string {
     my ($self, $data) = @_;
 
@@ -435,9 +437,7 @@ sub _cleanup_args {
     my ($self, $args) = @_;
 
 # remove blanks, ie. someoned doing foo \  bar
-#    my @res = grep !/^\s*\z/, @$args;
-# bad idea.
-    my @res = @$args;
+    my @res = grep !/^\s+\z/, @$args;
 
 # remove leading whitespace, ie. foo \ bar
     s/^\s*// for @res;

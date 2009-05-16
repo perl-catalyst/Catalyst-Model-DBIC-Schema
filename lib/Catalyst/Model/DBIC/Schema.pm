@@ -14,7 +14,9 @@ use Scalar::Util 'reftype';
 use MooseX::ClassAttribute;
 use Moose::Autobox;
 
-use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfo SchemaClass/;
+use Catalyst::Model::DBIC::Schema::Types
+    qw/ConnectInfo SchemaClass CursorClass/;
+
 use MooseX::Types::Moose qw/ArrayRef Str ClassName/;
 
 use namespace::clean -except => 'meta';
@@ -409,6 +411,13 @@ has 'model_name' => (is => 'ro', isa => Str, default => sub {
 
 has 'roles' => (is => 'ro', isa => ArrayRef|Str);
 
+has '_default_cursor_class' => (
+    is => 'ro',
+    isa => CursorClass,
+    default => 'DBIx::Class::Storage::DBI::Cursor',
+    coerce => 1
+);
+
 sub BUILD {
     my $self = shift;
     my $class = ref $self;
@@ -500,6 +509,15 @@ sub _install_rs_models {
             shift;
             shift->model($self->model_name)->resultset($moniker);
         }
+    }
+}
+
+sub _reset_cursor_class {
+    my $self = shift;
+
+    if ($self->storage->can('cursor_class')) {
+	$self->storage->cursor_class($self->_default_cursor_class)
+	    if $self->storage->cursor_class ne $self->_default_cursor_class;
     }
 }
 
