@@ -246,6 +246,7 @@ Or using L<Config::General>:
             user   postgres
             password ''
             auto_savepoint 1
+	    quote_char """
             on_connect_do   some SQL statement
             on_connect_do   another SQL statement
         </connect_info>
@@ -270,6 +271,7 @@ Or using L<YAML>:
           LongTruncOk: 1
           on_connect_do: [ "alter session set nls_date_format = 'YYYY-MM-DD HH24:MI:SS'" ]
           cursor_class: 'DBIx::Class::Cursor::Cached'
+	  quote_char: '"'
 
 The old arrayref style with hashrefs for L<DBI> then L<DBIx::Class> options is also
 supported:

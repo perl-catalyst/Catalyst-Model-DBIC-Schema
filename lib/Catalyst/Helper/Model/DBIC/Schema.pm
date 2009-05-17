@@ -64,40 +64,58 @@ password, and connect options, respectively.  These are optional for
 existing Schemas, but required if you use either of the C<create=>
 options.
 
+username and password can be omitted for C<SQLite> dsns.
+
 Use of either of the C<create=> options requires L<DBIx::Class::Schema::Loader>.
 
 =head1 TYPICAL EXAMPLES
 
-  # Use DBIx::Class::Schema::Loader to create a static DBIx::Class::Schema,
-  #  and a Model which references it:
+Use DBIx::Class::Schema::Loader to create a static DBIx::Class::Schema,
+and a Model which references it:
+
   script/myapp_create.pl model CatalystModelName DBIC::Schema \
     MyApp::SchemaClass create=static dbi:mysql:foodb myuname mypass
 
-  # Same, with extra connect_info args
-  script/myapp_create.pl model CatalystModelName DBIC::Schema \
-    MyApp::SchemaClass create=static dbi:SQLite:foo.db '' '' \
-    AutoCommit=1 cursor_class=DBIx::Class::Cursor::Cached \
-    on_connect_do='["select 1", "select 2"]'
+Same, with extra connect_info args
+user and pass can be omitted for sqlite, since they are always empty
 
-  # Same, but with extra Schema::Loader args (separate multiple values by commas):
+  script/myapp_create.pl model CatalystModelName DBIC::Schema \
+    MyApp::SchemaClass create=static dbi:SQLite:foo.db \
+    AutoCommit=1 cursor_class=DBIx::Class::Cursor::Cached \
+    on_connect_do='["select 1", "select 2"]' quote_char='"'
+
+B<ON WINDOWS COMMAND LINES QUOTING RULES ARE DIFFERENT>
+
+In C<cmd.exe> the above example would be:
+
+  script/myapp_create.pl model CatalystModelName DBIC::Schema \
+    MyApp::SchemaClass create=static dbi:SQLite:foo.db \
+    AutoCommit=1 cursor_class=DBIx::Class::Cursor::Cached \
+    on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""
+
+Same, but with extra Schema::Loader args (separate multiple values by commas):
+
   script/myapp_create.pl model CatalystModelName DBIC::Schema \
     MyApp::SchemaClass create=static db_schema=foodb components=Foo,Bar \
-    exclude='^wibble|wobble$' moniker_map='{ foo => "FFFFUUUU" }' \
+    exclude='^wibble|wobble$' moniker_map='{ foo => "FOO" }' \
     dbi:Pg:dbname=foodb myuname mypass
 
-  # See DBIx::Class::Schema::Loader::Base for list of options
+See L<DBIx::Class::Schema::Loader::Base> for a list of options
 
-  # Create a dynamic DBIx::Class::Schema::Loader-based Schema,
-  #  and a Model which references it:
+Create a dynamic DBIx::Class::Schema::Loader-based Schema,
+and a Model which references it (B<DEPRECATED>):
+
   script/myapp_create.pl model CatalystModelName DBIC::Schema \
     MyApp::SchemaClass create=dynamic dbi:mysql:foodb myuname mypass
 
-  # Reference an existing Schema of any kind, and provide some connection information for ->config:
+Reference an existing Schema of any kind, and provide some connection information for ->config:
+
   script/myapp_create.pl model CatalystModelName DBIC::Schema \
     MyApp::SchemaClass dbi:mysql:foodb myuname mypass
 
-  # Same, but don't supply connect information yet (you'll need to do this
-  #  in your app config, or [not recommended] in the schema itself).
+Same, but don't supply connect information yet (you'll need to do this
+in your app config, or [not recommended] in the schema itself).
+
   script/myapp_create.pl model ModelName DBIC::Schema My::SchemaClass
 
 =cut
@@ -262,7 +280,7 @@ sub _build_helper_connect_info {
 
     my @connect_info = @$connect_info;
 
-    my ($dsn, $user, $password) = splice @connect_info, 0, 3;
+    my ($dsn, $user, $password) = $self->_get_dsn_user_pass(\@connect_info);
 
     tie my %helper_connect_info, 'Tie::IxHash';
 
@@ -328,12 +346,28 @@ sub _data_struct_to_string {
     return Data::Dumper->Dump([$data]);
 }
 
+sub _get_dsn_user_pass {
+    my ($self, $connect_info) = @_;
+
+    my $dsn = shift @$connect_info;
+    my ($user, $password);
+
+    if ($dsn =~ /sqlite/i) {
+        ($user, $password) = ('', '');
+        shift @$connect_info while $connect_info->[0] eq '';
+    } else {
+        ($user, $password) = splice @$connect_info, 0, 2;
+    }
+    
+    ($dsn, $user, $password)
+}
+
 sub _parse_connect_info {
     my ($self, $connect_info) = @_;
 
     my @connect_info = @$connect_info;
 
-    my ($dsn, $user, $password) = splice @connect_info, 0, 3;
+    my ($dsn, $user, $password) = $self->_get_dsn_user_pass(\@connect_info);
 
     tie my %connect_info, 'Tie::IxHash';
     @connect_info{qw/dsn user password/} = ($dsn, $user, $password);
@@ -565,3 +599,5 @@ it under the same terms as Perl itself.
 =cut
 
 1;
+__END__
+# vim:sts=4 sw=4:

@@ -14,7 +14,7 @@ requires 'namespace::clean';
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
 
-test_requires 'Test::More';
+build_requires 'Test::More';
 
 feature 'Catalyst::Helper support',
     -default                      => 0,
@@ -23,10 +23,13 @@ feature 'Catalyst::Helper support',
     'DBIx::Class::Schema::Loader' => '0.04005';
 
 feature 'Caching support',
+    -default                      => 0,
     'DBIx::Class::Cursor::Cached' => 0;
 
 feature 'Replication support',
-    'MooseX::AttributeHelpers' => 0;
+    -default                   => 0,
+    'MooseX::AttributeHelpers' => 0,
+    'Hash::Merge'              => 0;
 
 if(-e 'MANIFEST.SKIP') {
     system("pod2text lib/Catalyst/Model/DBIC/Schema.pm > README");
