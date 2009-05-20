@@ -244,7 +244,7 @@ Or using L<Config::General>:
         <connect_info>
             dsn   dbi:Pg:dbname=mypgdb
             user   postgres
-            password ''
+            password ""
             auto_savepoint 1
 	    quote_char """
             on_connect_do   some SQL statement
