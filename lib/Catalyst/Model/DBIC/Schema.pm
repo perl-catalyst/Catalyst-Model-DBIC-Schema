@@ -396,12 +396,6 @@ has 'storage_type' => (is => 'rw', isa => Str);
 
 has 'connect_info' => (is => 'ro', isa => ConnectInfo, coerce => 1);
 
-# ref $self changes to anon after roles are applied, and _original_class_name is
-# broken in MX::O::P 0.0009
-has '_class_name' => (is => 'ro', isa => ClassName, default => sub {
-    ref shift
-});
-
 has 'model_name' => (is => 'ro', isa => Str, default => sub {
     my $self = shift;
 
@@ -496,7 +490,7 @@ sub ACCEPT_CONTEXT { shift }
 
 sub _install_rs_models {
     my $self  = shift;
-    my $class = $self->_class_name;
+    my $class = $self->_original_class_name;
 
     no strict 'refs';
 

@@ -31,9 +31,9 @@ subtype ConnectInfo,
 
 coerce ConnectInfo,
     from Str,
-    via { +{ dsn => $_ } },
+    via(\&_coerce_connect_info_from_str),
     from ArrayRef,
-    via \&_coerce_connect_info_from_arrayref;
+    via(\&_coerce_connect_info_from_arrayref);
 
 # { connect_info => [ ... ] } coercion would be nice, but no chained coercions
 # yet.
@@ -47,14 +47,20 @@ subtype ConnectInfos,
 
 coerce ConnectInfos,
     from Str,
-    via  { [ { dsn => $_ } ] },
-    from ArrayRef[Str],
-    via { [ map +{ dsn => $_ }, @$_ ] },
-    from ArrayRef[ArrayRef],
-    via { [ map \&_coerce_connect_info_from_arrayref, @$_ ] };
+    via  { [ _coerce_connect_info_from_str() ] },
+    from ArrayRef,
+    via { [ map {
+        !ref $_ ? _coerce_connect_info_from_str()
+            : reftype $_ eq 'HASH' ? $_
+            : reftype $_ eq 'ARRAY' ? _coerce_connect_info_from_arrayref()
+            : die 'invalid connect_info'
+    } @$_ ] };
 
 sub _coerce_connect_info_from_arrayref {
     my %connect_info;
+
+    # make a copy
+    $_ = [ @$_ ];
 
     if (!ref $_->[0]) { # array style
         $connect_info{dsn}      = shift @$_;
@@ -76,7 +82,16 @@ sub _coerce_connect_info_from_arrayref {
         die "invalid connect_info";
     }
 
+    for my $key (qw/user password/) {
+        $connect_info{$key} = ''
+            if not defined $connect_info{$key};
+    }
+
     \%connect_info;
+}
+
+sub _coerce_connect_info_from_str {
+    +{ dsn => $_, user => '', password => '' }
 }
 
 1;

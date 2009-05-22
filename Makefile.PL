@@ -14,7 +14,8 @@ requires 'namespace::clean';
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
 
-build_requires 'Test::More';
+test_requires 'Test::More';
+test_requires 'Test::Exception';
 
 feature 'Catalyst::Helper support',
     -default                      => 0,
