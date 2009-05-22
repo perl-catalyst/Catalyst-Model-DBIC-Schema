@@ -7,7 +7,6 @@ requires 'DBIx::Class'           => '0.08102';
 requires 'Catalyst::Runtime'     => '5.80003';
 requires 'Moose';
 requires 'Moose::Autobox';
-requires 'MooseX::ClassAttribute';
 requires 'MooseX::Types';
 requires 'MooseX::Object::Pluggable' => '0.0011';
 requires 'namespace::clean';

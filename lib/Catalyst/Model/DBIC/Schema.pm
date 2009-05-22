@@ -381,8 +381,6 @@ Used often for debugging and controlling transactions.
 
 =cut
 
-class_has 'composed_schema' => (is => 'rw', isa => 'DBIx::Class::Schema');
-
 has 'schema' => (is => 'rw', isa => 'DBIx::Class::Schema');
 
 has 'schema_class' => (
@@ -514,6 +512,20 @@ sub _reset_cursor_class {
     if ($self->storage->can('cursor_class')) {
 	$self->storage->cursor_class($self->_default_cursor_class)
 	    if $self->storage->cursor_class ne $self->_default_cursor_class;
+    }
+}
+
+{
+    my %COMPOSED_CACHE;
+
+    sub composed_schema {
+	my $self = shift;
+	my $class = $self->_original_class_name;
+	my $store = \$COMPOSED_CACHE{$class}{$self->schema_class};
+
+	$$store = shift if @_;
+
+	return $$store
     }
 }
 
