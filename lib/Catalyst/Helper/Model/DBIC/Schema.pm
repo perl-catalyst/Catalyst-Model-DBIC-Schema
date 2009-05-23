@@ -9,7 +9,10 @@ use Carp;
 use Tie::IxHash ();
 use Data::Dumper ();
 use List::Util 'first';
-use MooseX::Types::Moose qw/Str HashRef Bool/;
+use MooseX::Types::Moose qw/Str HashRef Bool ArrayRef/;
+use Catalyst::Model::DBIC::Schema::Types 'CreateOption';
+use Moose::Autobox;
+use List::MoreUtils 'firstidx';
 
 use namespace::clean -except => 'meta';
 
@@ -97,7 +100,7 @@ Same, but with extra Schema::Loader args (separate multiple values by commas):
 
   script/myapp_create.pl model CatalystModelName DBIC::Schema \
     MyApp::SchemaClass create=static db_schema=foodb components=Foo,Bar \
-    exclude='^wibble|wobble$' moniker_map='{ foo => "FOO" }' \
+    exclude='^(wibble|wobble)$' moniker_map='{ foo => "FOO" }' \
     dbi:Pg:dbname=foodb myuname mypass
 
 See L<DBIx::Class::Schema::Loader::Base> for a list of options
@@ -121,13 +124,14 @@ in your app config, or [not recommended] in the schema itself).
 =cut
 
 has helper => (is => 'ro', isa => 'Catalyst::Helper', required => 1);
-
+has create => (is => 'rw', isa => CreateOption);
+has args => (is => 'ro', isa => ArrayRef);
+has roles => (is => 'rw', isa => ArrayRef);
 has schema_class => (is => 'ro', isa => Str, required => 1);
-
 has loader_args => (is => 'rw', isa => HashRef);
 has connect_info => (is => 'rw', isa => HashRef);
-
 has old_schema => (is => 'rw', isa => Bool, lazy_build => 1);
+has components => (is => 'rw', isa => ArrayRef);
 
 =head1 METHODS
 
@@ -141,26 +145,45 @@ files.
 sub mk_compclass {
     my ($package, $helper, $schema_class, @args) = @_;
 
-    my $self = $package->new(helper => $helper, schema_class => $schema_class);
+    my $self = $package->new(
+        helper => $helper,
+        schema_class => $schema_class,
+        args => \@args
+    );
 
-    $helper->{schema_class} = $schema_class;
+    $self->run;
+}
+
+sub BUILD {
+    my $self   = shift;
+    my $helper = $self->helper;
+    my @args   = $self->args->flatten if $self->args;
+
+    $helper->{schema_class} = $self->schema_class;
 
     @args = $self->_cleanup_args(\@args);
 
-    my $create = '';
-    if ($args[0] && $args[0] =~ /^create=(dynamic|static)\z/) {
-        $create = $1;
-        shift @args;
+    my ($roles_idx, $roles);
+    if (($roles_idx = firstidx { ($roles) = /^roles=(\S*)\z/ } @args) != -1) {
+        my @roles = split /,/ => $roles;
 
-        if ($args[0] && $args[0] =~ /^roles=(.*)\z/) {
-            $helper->{roles} = '['
-                .(join ',' => map { qq{'$_'} } (split /,/ => $1))
-                .']';
-            shift @args;
-        }
+        $self->roles(\@roles);
+
+        $helper->{roles} = '['
+            .(join ',' => map { qq{'$_'} } ($self->roles->flatten))
+            .']';
+
+        splice @args, $roles_idx, 1, ();
+    }
+
+    if ($args[0] && $args[0] =~ /^create=(\S*)\z/) {
+        $self->create($1);
+        shift @args;
 
         if (@args) {
             $self->_parse_loader_args(\@args);
+
+            $helper->{loader_args} = $self->_build_helper_loader_args;
 
             if (first { /^dbi:/i } @args) {
                 $helper->{setup_connect_info} = 1;
@@ -168,19 +191,22 @@ sub mk_compclass {
                 $helper->{connect_info} =
                     $self->_build_helper_connect_info(\@args);
 
-                $self->_parse_connect_info(\@args) if $create eq 'static';
+                $self->_parse_connect_info(\@args);
             }
         }
     }
 
     $helper->{generator} = ref $self;
     $helper->{generator_version} = $VERSION;
+}
 
-    if ($create eq 'dynamic') {
+sub run {
+    my $self = shift;
+
+    if ($self->create eq 'dynamic') {
         $self->_print_dynamic_deprecation_warning;
-        $self->helper->{loader_args} = $self->_build_helper_loader_args;
         $self->_gen_dynamic_schema;
-    } elsif ($create eq 'static') {
+    } elsif ($self->create eq 'static') {
         $self->_gen_static_schema;
     }
 
@@ -202,6 +228,8 @@ sub _parse_loader_args {
 
     my @components =
     $self->_build_loader_components(delete $loader_args{components});
+
+    $self->components(\@components);
 
     for my $re_opt (qw/constraint exclude/) {
         $loader_args{$re_opt} = qr/$loader_args{$re_opt}/
@@ -234,7 +262,9 @@ sub _read_loader_args {
     while (@$args && $args->[0] !~ /^dbi:/) {
         my ($key, $val) = split /=/, shift(@$args), 2;
 
-        if ((my @vals = split /,/ => $val) > 1) {
+        if ($self->_is_struct($val)) {
+            $loader_args{$key} = $val;
+        } elsif ((my @vals = split /,/ => $val) > 1) {
             $loader_args{$key} = \@vals;
         } else {
             $loader_args{$key} = $val;
@@ -302,7 +332,7 @@ sub _build_helper_connect_info {
                 if (ref $val) {
                     $val = $self->_data_struct_to_string($val);
                 } else {
-                    $val = qq{'$val'};
+                    $val = 'q{'.$val.'}';
                 }
 
                 $helper_connect_info{$key} = $val;
@@ -399,10 +429,16 @@ sub _parse_connect_info {
     \%connect_info
 }
 
+sub _is_struct {
+    my ($self, $val) = @_;
+
+    return $val =~ /^\s*[[{]/;
+}
+
 sub _quote_unless_struct {
     my ($self, $val) = @_;
 
-    $val = qq{'$val'} if $val !~ /^\s*[[{]/;
+    $val = 'q{'.$val.'}' if not $self->_is_struct($val);
 
     $val;
 }

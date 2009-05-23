@@ -1,7 +1,9 @@
 package Catalyst::Model::DBIC::Schema::Types;
 
-use MooseX::Types
- -declare => [qw/ConnectInfo ConnectInfos Replicants SchemaClass CursorClass/];
+use MooseX::Types -declare => [qw/
+    ConnectInfo ConnectInfos Replicants SchemaClass CursorClass
+    CreateOption
+/];
 
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use MooseX::Types::Moose qw/ArrayRef HashRef Str ClassName/;
@@ -55,6 +57,13 @@ coerce ConnectInfos,
             : reftype $_ eq 'ARRAY' ? _coerce_connect_info_from_arrayref()
             : die 'invalid connect_info'
     } @$_ ] };
+
+# Helper stuff
+
+subtype CreateOption,
+    as Str,
+    where { /^(?:static|dynamic)\z/ },
+    message { "Invalid create option, must be one of 'static' or 'dynamic'" };
 
 sub _coerce_connect_info_from_arrayref {
     my %connect_info;
