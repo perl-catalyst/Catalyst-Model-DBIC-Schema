@@ -5,11 +5,12 @@ Revision history for Perl extension Catalyst::Model::DBIC::Schema
           use Class::C3 in the MyApp class (t0m)
         - warn on empty schema
         - create=dynamic deprecation warning
-        - conversion to Moose (of Model, helper to follow)
+        - conversion to Moose
         - cursor caching support (via ::Role::Caching)
+	- ::Storage::Replicated support (via ::Role::Replicated)
         - switch to hashref connect_info for DBIC 8100
-        - better helper option parsing
-        - pass loader opts to dynamic schemas
+        - better helper option parsing, with support for more options
+        - helper passes loader opts to dynamic schemas
 
 0.23  Sun Mar  8 20:30:02 GMT 2009
         - Kill a couple of warnings (one due to MRO::Compat)
