@@ -200,6 +200,12 @@ sub BUILD {
     $helper->{generator_version} = $VERSION;
 }
 
+=head2 run
+
+Can be called on an instance to generate the files.
+
+=cut
+
 sub run {
     my $self = shift;
 
@@ -414,7 +420,7 @@ sub _parse_connect_info {
 
         my ($key, $val) = split /=/, $_, 2;
 
-        if ($key =~ /^(?:quote_char|name_sep)\z/) {
+        if ($key =~ /^(?:quote_char|name_sep|limit_dialect)\z/) {
             $connect_info{$key} = $val;
         } else {
             $connect_info{$key} = eval $val;
