@@ -1,4 +1,5 @@
-package Catalyst::Model::DBIC::Schema::Types;
+package  # hide from PAUSE
+    Catalyst::Model::DBIC::Schema::Types;
 
 use MooseX::Types -declare => [qw/
     ConnectInfo ConnectInfos Replicants SchemaClass CursorClass
