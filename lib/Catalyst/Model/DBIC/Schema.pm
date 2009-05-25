@@ -461,6 +461,8 @@ sub connect { shift->composed_schema->connect(@_); }
 
 sub storage { shift->schema->storage(@_); }
 
+sub resultset { shift->schema->resultset(@_); }
+
 =head2 setup
 
 Called at C<<BUILD>> time before configuration.

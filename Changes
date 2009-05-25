@@ -1,9 +1,10 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.24  Mon May 25 08:44:09 PDT 2009
         - Add tests for issues with Class::C3 which are caused to
           applications which use new Catalyst but old DBIC, and have
           use Class::C3 in the MyApp class (t0m)
-        - warn on empty schema
+        - die on empty schema
         - create=dynamic deprecation warning
         - conversion to Moose
         - cursor caching support (via ::Role::Caching)
@@ -11,6 +12,7 @@ Revision history for Perl extension Catalyst::Model::DBIC::Schema
         - switch to hashref connect_info for DBIC 8100
         - better helper option parsing, with support for more options
         - helper passes loader opts to dynamic schemas
+	- more tests
 
 0.23  Sun Mar  8 20:30:02 GMT 2009
         - Kill a couple of warnings (one due to MRO::Compat)
