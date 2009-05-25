@@ -13,6 +13,7 @@ use MooseX::Types::Moose qw/Str HashRef Bool ArrayRef/;
 use Catalyst::Model::DBIC::Schema::Types 'CreateOption';
 use Moose::Autobox;
 use List::MoreUtils 'firstidx';
+use Scalar::Util 'looks_like_number';
 
 use namespace::clean -except => 'meta';
 
@@ -227,7 +228,7 @@ sub _parse_loader_args {
     while (my ($key, $val) = each %loader_args) {
         next if $key =~ /^(?:components|constraint|exclude)\z/;
 
-        $loader_args{$key} = eval $val;
+        $loader_args{$key} = $self->_eval($val);
         die "syntax error for loader args key '$key' with value '$val': $@"
             if $@;
     }
@@ -328,7 +329,7 @@ sub _build_helper_connect_info {
 
     for (@connect_info) {
         if (/^\s*{.*}\s*\z/) {
-            my $hash = eval $_;
+            my $hash = $self->_eval($_);
             die "Syntax errorr in connect_info hash: $_: $@" if $@;
             my %hash = %$hash;
 
@@ -410,7 +411,7 @@ sub _parse_connect_info {
 
     for (@connect_info) {
         if (/^\s*{.*}\s*\z/) {
-            my $hash = eval $_;
+            my $hash = $self->_eval($_);
             die "Syntax errorr in connect_info hash: $_: $@" if $@;
 
             %connect_info = (%connect_info, %$hash);
@@ -423,7 +424,7 @@ sub _parse_connect_info {
         if ($key =~ /^(?:quote_char|name_sep|limit_dialect)\z/) {
             $connect_info{$key} = $val;
         } else {
-            $connect_info{$key} = eval $val;
+            $connect_info{$key} = $self->_eval($val);
         }
 
         die "syntax error for connect_info key '$key' with value '$val': $@"
@@ -447,6 +448,16 @@ sub _quote_unless_struct {
     $val = 'q{'.$val.'}' if not $self->_is_struct($val);
 
     $val;
+}
+
+sub _eval {
+    my ($self, $code) = @_;
+
+    return $code if looks_like_number $code;
+
+    return $code if $code =~ m{^[\w;:/]*\z};
+
+    return eval "{no strict; $code}";
 }
 
 sub _gen_dynamic_schema {

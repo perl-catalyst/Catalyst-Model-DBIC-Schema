@@ -4,7 +4,7 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/lib";
 
-use Test::More tests => 37;
+use Test::More tests => 38;
 use Test::Exception;
 use Catalyst::Helper::Model::DBIC::Schema;
 use Catalyst::Helper;
@@ -79,6 +79,10 @@ is $i->helper->{loader_args}{constraint},
 $i = instance(args => [$static, q{exclude=^(foo|bar)$}]);
 is $i->loader_args->{exclude}, qr/^(foo|bar)$/,
     'exclude loader arg';
+
+$i = instance(args => [$static, q{db_schema=foo;bar::baz/quux}]);
+is $i->loader_args->{db_schema}, q{foo;bar::baz/quux},
+    'simple value loader arg';
 
 $i = instance(args => [
     $static, 'components=TimeStamp', $sqlite, $on_connect_do,
