@@ -1,4 +1,4 @@
-package Catalyst::Model::DBIC::Schema::Role::Replicated;
+package Catalyst::Model::DBIC::Schema::Trait::Replicated;
 
 use Moose::Role;
 use Moose::Autobox;
@@ -10,13 +10,13 @@ use namespace::clean -except => 'meta';
 
 =head1 NAME
 
-Catalyst::Model::DBIC::Schema::Role::Replicated - Replicated storage support for
+Catalyst::Model::DBIC::Schema::Trait::Replicated - Replicated storage support for
 L<Catalyst::Model::DBIC::Schema>
 
 =head1 SYNOPSiS
 
     __PACKAGE__->config({
-        roles => ['Replicated']
+        traits => ['Replicated']
         connect_info => 
             ['dbi:mysql:master', 'user', 'pass'],
         replicants => [
@@ -45,12 +45,12 @@ you do from replicants. Set to C<0> to turn off reads from master.
 
 =head1 NOTE ON L<DBIx::Class> VERSIONS PRIOR TO 0.08103
 
-This role will work, however, any C<::Storage::Replicated> options in
+This trait will work, however, any C<::Storage::Replicated> options in
 L<Catalyst::Model::DBIC::Schema/connect_info> will be ignored, master
 connect_info will not be merged to replicants, and
 L<DBIx::Class::Storage::DBI::Replicated::Balancer::First> will be used instead,
 with all your reads going only to one of your replicants. You'll also get some
-warnings. The C<Caching> role will also not work.
+warnings. The C<Caching> trait will also not work.
 
 Please upgrade.
 

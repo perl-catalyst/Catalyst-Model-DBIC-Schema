@@ -1,4 +1,4 @@
-package Catalyst::Model::DBIC::Schema::Role::Caching;
+package Catalyst::Model::DBIC::Schema::Trait::Caching;
 
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
@@ -9,13 +9,13 @@ use namespace::clean -except => 'meta';
 
 =head1 NAME
 
-Catalyst::Model::DBIC::Schema::Role::Caching - Query caching support for
+Catalyst::Model::DBIC::Schema::Trait::Caching - Query caching support for
 Catalyst::Model::DBIC::Schema
 
 =head1 SYNOPSIS
 
     __PACKAGE__->config({
-        roles => ['Caching'],
+        traits => ['Caching'],
         connect_info => 
             ['dbi:mysql:db', 'user', 'pass'],
     });
@@ -52,7 +52,7 @@ Turn caching on or off, you can use:
 
 =cut
 
-has 'caching' => (is => 'rw', isa => Int, default => 1);
+has caching => (is => 'rw', isa => Int, default => 1);
 
 after setup => sub {
     my $self = shift;

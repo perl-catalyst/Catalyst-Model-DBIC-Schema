@@ -12,8 +12,8 @@ plan skip_all => 'Enable this optional test with $ENV{C_M_DBIC_SCHEMA_TESTAPP}'
 my $test_params = [
     [ 'TestSchema', 'DBIC::Schema', '' ],
     [ 'TestSchemaDSN', 'DBIC::Schema', q{fakedsn fakeuser fakepass "{ AutoCommit => 1 }"} ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', q{create=static roles=Caching moniker_map="{ roles => \"ROLE\" }" constraint="^users\z" dbi:SQLite:testdb.db "" "" on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""} ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', q{create=static roles=Caching moniker_map="{ roles => \"ROLE\" }" dbi:SQLite:testdb.db on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""} ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', q{create=static traits=Caching moniker_map="{ roles => \"ROLE\" }" constraint="^users\z" dbi:SQLite:testdb.db "" "" on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""} ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', q{create=static traits=Caching moniker_map="{ roles => \"ROLE\" }" dbi:SQLite:testdb.db on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""} ],
 ];
 
 plan tests => (2 * @$test_params + 2);

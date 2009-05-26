@@ -240,7 +240,7 @@ Or using L<Config::General>:
 
     <Model::FilmDB>
         schema_class   MyApp::Schema::FilmDB
-        roles Caching
+        traits Caching
         <connect_info>
             dsn   dbi:Pg:dbname=mypgdb
             user   postgres
@@ -292,36 +292,36 @@ supported:
     }
   ]
 
-=head2 roles
+=head2 traits
 
-Array of Roles to apply at BUILD time. Roles are relative to the
-C<<MyApp::Model::DB::Role::> then C<<Catalyst::Model::DBIC::Schema::Role::>>
+Array of Traits to apply at BUILD time. Traits are relative to the
+C<<MyApp::Model::DB::Trait::> then C<<Catalyst::Model::DBIC::Schema::Trait::>>
 namespaces, unless prefixed with C<+> in which case they are taken to be a
 fully qualified name. E.g.:
 
-    roles Caching
-    roles +MyApp::DB::Role::Foo
+    traits Caching
+    traits +MyApp::DB::Trait::Foo
 
 This is done using L<MooseX::Object::Pluggable>.
 
 A new instance is created at application time, so any consumed required
 attributes, coercions and modifiers will work.
 
-Roles are applied before setup, schema and connection are set.
+Traits are applied before setup, schema and connection are set.
 
-C<ref $self> will be an anon class if any roles are applied.
+C<ref $self> will be an anon class if any traits are applied.
 
 You cannot modify C<new> or C<BUILD>, modify C<setup> instead.
 
 L</ACCEPT_CONTEXT> and L</finalize> can also be modified.
 
-Roles that come with the distribution:
+Traits that come with the distribution:
 
 =over 4
 
-=item L<Catalyst::Model::DBIC::Schema::Role::Caching>
+=item L<Catalyst::Model::DBIC::Schema::Trait::Caching>
 
-=item L<Catalyst::Model::DBIC::Schema::Role::Replicated>
+=item L<Catalyst::Model::DBIC::Schema::Trait::Replicated>
 
 =back
 
@@ -381,20 +381,20 @@ Used often for debugging and controlling transactions.
 
 =cut
 
-has 'schema' => (is => 'rw', isa => 'DBIx::Class::Schema');
+has schema => (is => 'rw', isa => 'DBIx::Class::Schema');
 
-has 'schema_class' => (
+has schema_class => (
     is => 'ro',
     isa => SchemaClass,
     coerce => 1,
     required => 1
 );
 
-has 'storage_type' => (is => 'rw', isa => Str);
+has storage_type => (is => 'rw', isa => Str);
 
-has 'connect_info' => (is => 'ro', isa => ConnectInfo, coerce => 1);
+has connect_info => (is => 'ro', isa => ConnectInfo, coerce => 1);
 
-has 'model_name' => (is => 'ro', isa => Str, default => sub {
+has model_name => (is => 'ro', isa => Str, default => sub {
     my $self = shift;
 
     my $class = ref $self;
@@ -403,9 +403,9 @@ has 'model_name' => (is => 'ro', isa => Str, default => sub {
     $model_name
 });
 
-has 'roles' => (is => 'ro', isa => ArrayRef|Str);
+has traits => (is => 'ro', isa => ArrayRef|Str);
 
-has '_default_cursor_class' => (
+has _default_cursor_class => (
     is => 'ro',
     isa => CursorClass,
     default => 'DBIx::Class::Storage::DBI::Cursor',
@@ -435,9 +435,9 @@ sub BUILD {
         . " ".$self->connect_info->{cursor_class}.": $@";
     }
 
-    $self->_plugin_ns('Role');
+    $self->_plugin_ns('Trait');
 
-    $self->load_plugins($self->roles->flatten) if $self->roles;
+    $self->load_plugins($self->traits->flatten) if $self->traits;
 
     $self->setup;
 
@@ -546,10 +546,10 @@ L<DBIx::Class>, L<DBIx::Class::Schema>,
 L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
 L<MooseX::Object::Pluggable>
 
-Roles:
+Traits:
 
-L<Catalyst::Model::DBIC::Schema::Role::Caching>,
-L<Catalyst::Model::DBIC::Schema::Role::Replicated>
+L<Catalyst::Model::DBIC::Schema::Trait::Caching>,
+L<Catalyst::Model::DBIC::Schema::Trait::Replicated>
 
 =head1 AUTHOR
 

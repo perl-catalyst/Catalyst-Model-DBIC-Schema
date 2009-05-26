@@ -24,7 +24,7 @@ Catalyst::Helper::Model::DBIC::Schema - Helper for DBIC Schema Models
 =head1 SYNOPSIS
 
   script/create.pl model CatalystModelName DBIC::Schema MyApp::SchemaClass \
-    [ create=dynamic | create=static ] [ roles=role1,role2... ] \
+    [ create=dynamic | create=static ] [ traits=trait1,trait2... ] \
     [ Schema::Loader opts ] [ dsn user pass ] \
     [ other connect_info args ]
 
@@ -56,7 +56,7 @@ L<DBIx::Class::Schema::Loader> at runtime, and will not automatically
 adapt itself to changes in your database structure.  You can edit
 the generated classes by hand to refine them.
 
-C<roles> is the list of roles to apply to the model, see
+C<traits> is the list of traits to apply to the model, see
 L<Catalyst::Model::DBIC::Schema> for details.
 
 C<Schema::Loader opts> are described in L</TYPICAL EXAMPLES> below.
@@ -87,6 +87,10 @@ user and pass can be omitted for sqlite, since they are always empty
     MyApp::SchemaClass create=static dbi:SQLite:foo.db \
     AutoCommit=1 cursor_class=DBIx::Class::Cursor::Cached \
     on_connect_do='["select 1", "select 2"]' quote_char='"'
+
+If using a 2 character quote_char:
+
+  script/myapp_create.pl ... quote_char='[]'
 
 B<ON WINDOWS COMMAND LINES QUOTING RULES ARE DIFFERENT>
 
@@ -127,7 +131,7 @@ in your app config, or [not recommended] in the schema itself).
 has helper => (is => 'ro', isa => 'Catalyst::Helper', required => 1);
 has create => (is => 'rw', isa => CreateOption);
 has args => (is => 'ro', isa => ArrayRef);
-has roles => (is => 'rw', isa => ArrayRef);
+has traits => (is => 'rw', isa => ArrayRef);
 has schema_class => (is => 'ro', isa => Str, required => 1);
 has loader_args => (is => 'rw', isa => HashRef);
 has connect_info => (is => 'rw', isa => HashRef);
@@ -164,17 +168,17 @@ sub BUILD {
 
     @args = $self->_cleanup_args(\@args);
 
-    my ($roles_idx, $roles);
-    if (($roles_idx = firstidx { ($roles) = /^roles=(\S*)\z/ } @args) != -1) {
-        my @roles = split /,/ => $roles;
+    my ($traits_idx, $traits);
+    if (($traits_idx = firstidx { ($traits) = /^traits=(\S*)\z/ } @args) != -1) {
+        my @traits = split /,/ => $traits;
 
-        $self->roles(\@roles);
+        $self->traits(\@traits);
 
-        $helper->{roles} = '['
-            .(join ',' => map { qq{'$_'} } ($self->roles->flatten))
+        $helper->{traits} = '['
+            .(join ',' => map { qq{'$_'} } ($self->traits->flatten))
             .']';
 
-        splice @args, $roles_idx, 1, ();
+        splice @args, $traits_idx, 1, ();
     }
 
     if ($args[0] && $args[0] =~ /^create=(\S*)\z/) {
@@ -339,7 +343,7 @@ sub _build_helper_connect_info {
                 if (ref $val) {
                     $val = $self->_data_struct_to_string($val);
                 } else {
-                    $val = 'q{'.$val.'}';
+                    $val = $self->_quote($val);
                 }
 
                 $helper_connect_info{$key} = $val;
@@ -350,7 +354,13 @@ sub _build_helper_connect_info {
 
         my ($key, $val) = split /=/, $_, 2;
 
-        $helper_connect_info{$key} = $self->_quote_unless_struct($val);
+        if ($key eq 'quote_char') {
+            $helper_connect_info{$key} = length($val) == 1 ?
+                $self->_quote($val) :
+                $self->_data_struct_to_string([split //, $val]);
+        } else {
+            $helper_connect_info{$key} = $self->_quote_unless_struct($val);
+        }
     }
 
     \%helper_connect_info
@@ -421,7 +431,9 @@ sub _parse_connect_info {
 
         my ($key, $val) = split /=/, $_, 2;
 
-        if ($key =~ /^(?:quote_char|name_sep|limit_dialect)\z/) {
+        if ($key eq 'quote_char') {
+            $connect_info{$key} = length($val) == 1 ? $val : [split //, $val];
+        } elsif ($key =~ /^(?:name_sep|limit_dialect)\z/) {
             $connect_info{$key} = $val;
         } else {
             $connect_info{$key} = $self->_eval($val);
@@ -442,12 +454,18 @@ sub _is_struct {
     return $val =~ /^\s*[[{]/;
 }
 
+sub _quote {
+    my ($self, $val) = @_;
+
+    return 'q{'.$val.'}';
+}
+
 sub _quote_unless_struct {
     my ($self, $val) = @_;
 
-    $val = 'q{'.$val.'}' if not $self->_is_struct($val);
+    $val = $self->_quote($val) if not $self->_is_struct($val);
 
-    $val;
+    return $val;
 }
 
 sub _eval {
@@ -615,7 +633,7 @@ use base 'Catalyst::Model::DBIC::Schema';
 
 __PACKAGE__->config(
     schema_class => '[% schema_class %]',
-    [% IF roles %]roles => [% roles %],[% END %]
+    [% IF traits %]traits => [% traits %],[% END %]
     [% IF setup_connect_info %]connect_info => {
         [%- FOREACH key = connect_info.keys %]
         [% key %] => [% connect_info.${key} %],

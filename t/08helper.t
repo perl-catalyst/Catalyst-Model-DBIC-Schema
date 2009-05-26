@@ -4,7 +4,7 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/lib";
 
-use Test::More tests => 38;
+use Test::More tests => 40;
 use Test::Exception;
 use Catalyst::Helper::Model::DBIC::Schema;
 use Catalyst::Helper;
@@ -24,13 +24,13 @@ my $i;
 $i = instance(schema_class => 'ASchemaClass');
 is $i->old_schema, 1, '->load_classes detected correctly';
 
-$i = instance(args => ['roles=Caching']);
-is_deeply $i->roles, ['Caching'], 'one role';
-is $i->helper->{roles}, "['Caching']", 'one role as string';
+$i = instance(args => ['traits=Caching']);
+is_deeply $i->traits, ['Caching'], 'one trait';
+is $i->helper->{traits}, "['Caching']", 'one trait as string';
 
-$i = instance(args => ['roles=Caching,Replicated']);
-is_deeply $i->roles, ['Caching', 'Replicated'], 'two roles';
-is $i->helper->{roles}, "['Caching','Replicated']", 'two roles as string';
+$i = instance(args => ['traits=Caching,Replicated']);
+is_deeply $i->traits, ['Caching', 'Replicated'], 'two traits';
+is $i->helper->{traits}, "['Caching','Replicated']", 'two traits as string';
 
 $i = instance(args => [$static]);
 is $i->create, 'static', 'create=static';
@@ -129,6 +129,15 @@ $i = instance(args => [
 is $i->connect_info->{dsn}, $pg, 'connect_info dsn';
 is $i->connect_info->{user}, 'user', 'user';
 is $i->connect_info->{password}, 'pass', 'password';
+
+$i = instance(args => [
+    $static, $pg, 'user', 'pass', 'quote_char=[]', $name_sep
+]);
+
+is_deeply $i->connect_info->{quote_char}, ['[', ']'],
+    '2 character quote_char';
+is $i->helper->{connect_info}{quote_char}, '["[","]"]',
+    '2 character quote_char as string';
 
 $i = instance(args => [
     $static, 'components=TimeStamp', $sqlite, $on_connect_do,
