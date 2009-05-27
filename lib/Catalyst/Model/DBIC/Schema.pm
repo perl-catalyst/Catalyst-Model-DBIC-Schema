@@ -3,7 +3,6 @@ package Catalyst::Model::DBIC::Schema;
 use Moose;
 use mro 'c3';
 extends 'Catalyst::Model';
-with 'MooseX::Object::Pluggable';
 
 our $VERSION = '0.24';
 
@@ -13,11 +12,12 @@ use DBIx::Class ();
 use Scalar::Util 'reftype';
 use MooseX::ClassAttribute;
 use Moose::Autobox;
+use Moose::Util ();
 
 use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo SchemaClass CursorClass/;
 
-use MooseX::Types::Moose qw/ArrayRef Str ClassName/;
+use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef/;
 
 use namespace::clean -except => 'meta';
 
@@ -294,26 +294,25 @@ supported:
 
 =head2 traits
 
-Array of Traits to apply at BUILD time. Traits are relative to the
-C<<MyApp::Model::DB::Trait::> then C<<Catalyst::Model::DBIC::Schema::Trait::>>
-namespaces, unless prefixed with C<+> in which case they are taken to be a
-fully qualified name. E.g.:
+Array of Traits to apply to the instance. Traits are L<Moose::Role>s.
+
+They are relative to the C<< MyApp::Model::DB::Trait:: >>, then the C<<
+Catalyst::Model::DBIC::Schema::Trait:: >> namespaces, unless prefixed with C<+>
+in which case they are taken to be a fully qualified name. E.g.:
 
     traits Caching
     traits +MyApp::DB::Trait::Foo
-
-This is done using L<MooseX::Object::Pluggable>.
 
 A new instance is created at application time, so any consumed required
 attributes, coercions and modifiers will work.
 
 Traits are applied before setup, schema and connection are set.
 
-C<ref $self> will be an anon class if any traits are applied.
+C<ref $self> will be an anon class if any traits are applied, C<<
+$self->_original_class_name >> will be the original class.
 
-You cannot modify C<new> or C<BUILD>, modify C<setup> instead.
-
-L</ACCEPT_CONTEXT> and L</finalize> can also be modified.
+You cannot modify C<BUILD> in a trait, as that is when traits are applied,
+modify L</setup> instead.
 
 Traits that come with the distribution:
 
@@ -405,11 +404,20 @@ has model_name => (is => 'ro', isa => Str, default => sub {
 
 has traits => (is => 'ro', isa => ArrayRef|Str);
 
+has _trait_fqns => (is => 'ro', isa => ArrayRef|Undef, lazy_build => 1);
+
 has _default_cursor_class => (
     is => 'ro',
     isa => CursorClass,
     default => 'DBIx::Class::Storage::DBI::Cursor',
     coerce => 1
+);
+
+has _original_class_name => (
+    is => 'ro',
+    required => 1,
+    isa => Str,
+    default => sub { blessed $_[0] },
 );
 
 sub BUILD {
@@ -435,9 +443,8 @@ sub BUILD {
         . " ".$self->connect_info->{cursor_class}.": $@";
     }
 
-    $self->_plugin_ns('Trait');
-
-    $self->load_plugins($self->traits->flatten) if $self->traits;
+    Moose::Util::apply_all_roles($self, $self->_trait_fqns->flatten)
+	if $self->_trait_fqns;
 
     $self->setup;
 
@@ -465,7 +472,7 @@ sub resultset { shift->schema->resultset(@_); }
 
 =head2 setup
 
-Called at C<<BUILD>> time before configuration.
+Called at C<BUILD>> time before configuration.
 
 =cut
 
@@ -481,7 +488,7 @@ sub finalize { 1 }
 
 =head2 ACCEPT_CONTEXT
 
-Point of extension for doing things at C<<$c->model>> time, returns the model
+Point of extension for doing things at C<< $c->model >> time, returns the model
 instance, see L<Catalyst::Manual::Intro> for more information.
 
 =cut
@@ -531,6 +538,36 @@ sub _reset_cursor_class {
     }
 }
 
+sub _build__trait_fqns {
+    my $self  = shift;
+    my $class = $self->_original_class_name;
+    my $base  = 'Trait';
+
+    my @names = $self->traits->flatten if $self->traits;
+    return unless @names;
+
+    my @search_ns = grep !/^(?:Moose|Class::MOP)::/,
+        $class->meta->class_precedence_list;
+        
+    my @traits;
+
+    OUTER: for my $name (@names) {
+	if ($name =~ /^\+(.*)/) {
+	    push @traits, $1;
+	    next;
+	}
+	for my $ns (@search_ns) {
+	    my $full = "${ns}::${base}::${name}";
+	    if (eval { Class::MOP::load_class($full) }) {
+		push @traits, $full;
+		next OUTER;
+	    }
+	}
+    }
+
+    return @traits ? \@traits : undef;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 =head1 SEE ALSO
@@ -557,7 +594,7 @@ Brandon L Black, C<blblack@gmail.com>
 
 Contributors:
 
-Rafael Kitover, C<<rkitover at cpan.org>>
+Rafael Kitover, C<rkitover at cpan.org>
 
 =head1 COPYRIGHT
 
@@ -567,3 +604,4 @@ under the same terms as Perl itself.
 =cut
 
 1;
+# vim:sts=4 sw=4:

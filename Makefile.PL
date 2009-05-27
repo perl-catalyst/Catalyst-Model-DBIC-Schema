@@ -3,12 +3,11 @@ use inc::Module::Install 0.90;
 name 'Catalyst-Model-DBIC-Schema';
 all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 
-requires 'DBIx::Class'           => '0.08102';
+requires 'DBIx::Class'           => '0.08103';
 requires 'Catalyst::Runtime'     => '5.80003';
 requires 'Moose';
 requires 'Moose::Autobox';
 requires 'MooseX::Types';
-requires 'MooseX::Object::Pluggable' => '0.0011';
 requires 'namespace::clean';
 requires 'Carp::Clan';
 requires 'List::MoreUtils';

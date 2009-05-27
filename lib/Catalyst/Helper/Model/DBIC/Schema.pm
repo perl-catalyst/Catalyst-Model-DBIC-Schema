@@ -568,7 +568,7 @@ Brandon L Black, C<blblack@gmail.com>
 
 Contributors:
 
-Rafael Kitover, C<<rkitover at cpan.org>>
+Rafael Kitover, C<rkitover at cpan.org>
 
 =head1 LICENSE
 
