@@ -79,11 +79,13 @@ after setup => sub {
     }
 };
 
-after finalize => sub {
+my $build = sub {
     my $self = shift;
 
     $self->storage->connect_replicants(map [ $_ ], $self->replicants->flatten);
 };
+after BUILD => $build;
+sub BUILD { goto $build }
 
 =head1 SEE ALSO
 
@@ -93,7 +95,7 @@ L<Cache::FastMmap>, L<DBIx::Class::Cursor::Cached>
 
 =head1 AUTHOR
 
-Rafael Kitover, C<rkitover@cpan.org>
+Rafael Kitover, C<rkitover at cpan.org>
 
 =head1 COPYRIGHT
 

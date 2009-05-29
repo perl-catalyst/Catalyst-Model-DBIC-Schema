@@ -111,7 +111,7 @@ L<Cache::FastMmap>, L<DBIx::Class::Cursor::Cached>
 
 =head1 AUTHOR
 
-Rafael Kitover, C<rkitover@cpan.org>
+Rafael Kitover, C<rkitover at cpan.org>
 
 =head1 COPYRIGHT
 

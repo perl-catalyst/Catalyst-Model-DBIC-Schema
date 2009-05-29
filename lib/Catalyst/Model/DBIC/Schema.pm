@@ -2,6 +2,7 @@ package Catalyst::Model::DBIC::Schema;
 
 use Moose;
 use mro 'c3';
+with 'MooseX::Traits';
 extends 'Catalyst::Model';
 
 our $VERSION = '0.24';
@@ -9,10 +10,7 @@ our $VERSION = '0.24';
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
-use Scalar::Util 'reftype';
-use MooseX::ClassAttribute;
 use Moose::Autobox;
-use Moose::Util ();
 
 use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo SchemaClass CursorClass/;
@@ -306,13 +304,13 @@ in which case they are taken to be a fully qualified name. E.g.:
 A new instance is created at application time, so any consumed required
 attributes, coercions and modifiers will work.
 
-Traits are applied before setup, schema and connection are set.
+Traits are applied at L<Catalyst::Component/COMPONENT> time using L<MooseX::Traits>.
 
 C<ref $self> will be an anon class if any traits are applied, C<<
 $self->_original_class_name >> will be the original class.
 
-You cannot modify C<BUILD> in a trait, as that is when traits are applied,
-modify L</setup> instead.
+When writing a Trait, interesting points to modify are C<BUILD>, L</setup> and
+L</ACCEPT_CONTEXT>.
 
 Traits that come with the distribution:
 
@@ -330,6 +328,42 @@ Allows the use of a different C<storage_type> than what is set in your
 C<schema_class> (which in turn defaults to C<::DBI> if not set in current
 L<DBIx::Class>).  Completely optional, and probably unnecessary for most
 people until other storage backends become available for L<DBIx::Class>.
+
+=head1 ATTRIBUTES
+
+The keys you pass in the model configuration are available as attributes.
+
+Other attributes available:
+
+=head2 connect_info
+
+Your connect_info args normalized to hashref form (with dsn/user/password.) See
+L<DBIx::Class::Storage::DBI/connect_info> for more info on the hashref form of
+L</connect_info>.
+
+=head2 model_name
+
+The model name L<Catalyst> uses to resolve this model, the part after
+C<::Model::> or C<::M::> in your class name. E.g. if your class name is
+C<MyApp::Model::DB> the L</model_name> will be C<DB>.
+
+=head2 _original_class_name
+
+The class name of your model before any L</traits> are applied. E.g.
+C<MyApp::Model::DB>.
+
+=head2 _default_cursor_class
+
+What to rest your L<DBIx::Class::Storage::DBI/cursor_class> if a custom one
+doesn't work out. Defaults to L<DBIx::Class::Storage::DBI::Cursor>.
+
+=head2 _traits
+
+Unresolved arrayref of traits passed at C<COMPONENT> time.
+
+=head2 _resolved_traits
+
+Traits you used resolved to full class names.
 
 =head1 METHODS
 
@@ -393,18 +427,15 @@ has storage_type => (is => 'rw', isa => Str);
 
 has connect_info => (is => 'ro', isa => ConnectInfo, coerce => 1);
 
-has model_name => (is => 'ro', isa => Str, default => sub {
-    my $self = shift;
+has model_name => (
+    is => 'ro',
+    isa => Str,
+    required => 1,
+    lazy_build => 1,
+);
 
-    my $class = ref $self;
-    (my $model_name = $class) =~ s/^[\w:]+::(?:Model|M):://;
-
-    $model_name
-});
-
-has traits => (is => 'ro', isa => ArrayRef|Str);
-
-has _trait_fqns => (is => 'ro', isa => ArrayRef|Undef, lazy_build => 1);
+has _traits => (is => 'ro', isa => ArrayRef);
+has _resolved_traits => (is => 'ro', isa => ArrayRef);
 
 has _default_cursor_class => (
     is => 'ro',
@@ -419,6 +450,32 @@ has _original_class_name => (
     isa => Str,
     default => sub { blessed $_[0] },
 );
+
+sub COMPONENT {
+    my ($class, $app, $args) = @_;
+
+    $args = $class->merge_config_hashes($class->config, $args);
+
+    if (my $traits = delete $args->{traits}) {
+        my @traits = $class->_resolve_traits($traits->flatten);
+	return $class->new_with_traits(
+	    traits => \@traits,
+	    _original_class_name => $class,
+            _traits => $traits,
+            _resolved_traits => \@traits,
+	    %$args
+	);
+    }
+
+    return $class->new(%$args);
+}
+
+# we override Catalyst::Component::BUILDARGS, which merges configs, because we
+# merge configs ourselves in COMPONENT. We also don't pass $app to ->new, so
+# Moose::Object::BUILDARGS works perfectly.
+sub BUILDARGS {
+    goto &Moose::Object::BUILDARGS;
+}
 
 sub BUILD {
     my $self = shift;
@@ -443,9 +500,6 @@ sub BUILD {
         . " ".$self->connect_info->{cursor_class}.": $@";
     }
 
-    Moose::Util::apply_all_roles($self, $self->_trait_fqns->flatten)
-	if $self->_trait_fqns;
-
     $self->setup;
 
     $self->composed_schema($schema_class->compose_namespace($class));
@@ -458,8 +512,6 @@ sub BUILD {
     $self->schema->connection($self->connect_info);
 
     $self->_install_rs_models;
-
-    $self->finalize;
 }
 
 sub clone { shift->composed_schema->clone(@_); }
@@ -472,19 +524,12 @@ sub resultset { shift->schema->resultset(@_); }
 
 =head2 setup
 
-Called at C<BUILD>> time before configuration.
+Called at C<BUILD>> time before configuration, but after L</connect_info> is
+set. To do something after configuuration use C<< after BUILD => >>.
 
 =cut
 
 sub setup { 1 }
-
-=head2 finalize
-
-Called at the end of C<BUILD> after everything has been configured.
-
-=cut
-
-sub finalize { 1 }
 
 =head2 ACCEPT_CONTEXT
 
@@ -538,13 +583,9 @@ sub _reset_cursor_class {
     }
 }
 
-sub _build__trait_fqns {
-    my $self  = shift;
-    my $class = $self->_original_class_name;
+sub _resolve_traits {
+    my ($class, @names) = @_;
     my $base  = 'Trait';
-
-    my @names = $self->traits->flatten if $self->traits;
-    return unless @names;
 
     my @search_ns = grep !/^(?:Moose|Class::MOP)::/,
         $class->meta->class_precedence_list;
@@ -565,7 +606,15 @@ sub _build__trait_fqns {
 	}
     }
 
-    return @traits ? \@traits : undef;
+    return @traits;
+}
+
+sub _build_model_name {
+    my $self  = shift;
+    my $class = $self->_original_class_name;
+    (my $model_name = $class) =~ s/^[\w:]+::(?:Model|M):://;
+
+    return $model_name;
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -590,7 +639,7 @@ L<Catalyst::Model::DBIC::Schema::Trait::Replicated>
 
 =head1 AUTHOR
 
-Brandon L Black, C<blblack@gmail.com>
+Brandon L Black, C<blblack at gmail.com>
 
 Contributors:
 
@@ -604,4 +653,4 @@ under the same terms as Perl itself.
 =cut
 
 1;
-# vim:sts=4 sw=4:
+# vim:sts=4 sw=4 et:
