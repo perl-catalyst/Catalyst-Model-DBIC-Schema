@@ -90,19 +90,34 @@ be used/accessed in the normal Catalyst manner, via $c->model():
   my $actor = $c->model('FilmDB::Actor')->find(1);
 
 You can also use it to set up DBIC authentication with 
-Authentication::Store::DBIC in MyApp.pm:
+L<Catalyst::Authentication::Store::DBIx::Class> in MyApp.pm:
 
   package MyApp;
 
-  use Catalyst qw/... Authentication::Store::DBIC/;
+  use Catalyst qw/... Authentication .../;
 
   ...
 
-  __PACKAGE__->config->{authentication}{dbic} = {
-      user_class      => 'FilmDB::Actor',
-      user_field      => 'name',
-      password_field  => 'password'
-  }
+  __PACKAGE__->config->{authentication} = 
+                {  
+                    default_realm => 'members',
+                    realms => {
+                        members => {
+                            credential => {
+                                class => 'Password',
+                                password_field => 'password',
+                                password_type => 'hashed'
+                                password_hash_type => 'SHA-256'
+                            },
+                            store => {
+                                class => 'DBIx::Class',
+                                user_model => 'DB::User',
+                                role_relation => 'roles',
+                                role_field => 'rolename',                   
+                            }
+                        }
+                    }
+                };
 
 C<< $c->model('Schema::Source') >> returns a L<DBIx::Class::ResultSet> for 
 the source name parameter passed. To find out more about which methods can 
@@ -353,12 +368,12 @@ C<MyApp::Model::DB>.
 
 =head2 _default_cursor_class
 
-What to rest your L<DBIx::Class::Storage::DBI/cursor_class> if a custom one
+What to reset your L<DBIx::Class::Storage::DBI/cursor_class> to if a custom one
 doesn't work out. Defaults to L<DBIx::Class::Storage::DBI::Cursor>.
 
 =head2 _traits
 
-Unresolved arrayref of traits passed at C<COMPONENT> time.
+Unresolved arrayref of traits passed in the config.
 
 =head2 _resolved_traits
 
