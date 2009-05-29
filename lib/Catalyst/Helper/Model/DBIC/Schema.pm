@@ -1,5 +1,6 @@
 package Catalyst::Helper::Model::DBIC::Schema;
 
+use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
@@ -14,8 +15,6 @@ use Catalyst::Model::DBIC::Schema::Types 'CreateOption';
 use Moose::Autobox;
 use List::MoreUtils 'firstidx';
 use Scalar::Util 'looks_like_number';
-
-use namespace::clean -except => 'meta';
 
 =head1 NAME
 

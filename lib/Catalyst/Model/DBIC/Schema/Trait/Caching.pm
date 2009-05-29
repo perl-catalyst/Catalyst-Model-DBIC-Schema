@@ -1,11 +1,10 @@
 package Catalyst::Model::DBIC::Schema::Trait::Caching;
 
+use namespace::autoclean;
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Catalyst::Model::DBIC::Schema::Types 'CursorClass';
 use MooseX::Types::Moose qw/Int Str/;
-
-use namespace::clean -except => 'meta';
 
 =head1 NAME
 

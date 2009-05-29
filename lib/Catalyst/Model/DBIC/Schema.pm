@@ -7,6 +7,7 @@ extends 'Catalyst::Model';
 
 our $VERSION = '0.24';
 
+use namespace::autoclean;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
@@ -16,8 +17,6 @@ use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo SchemaClass CursorClass/;
 
 use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef/;
-
-use namespace::clean -except => 'meta';
 
 =head1 NAME
 
@@ -458,23 +457,16 @@ sub COMPONENT {
 
     if (my $traits = delete $args->{traits}) {
         my @traits = $class->_resolve_traits($traits->flatten);
-	return $class->new_with_traits(
+	return $class->new_with_traits({
 	    traits => \@traits,
 	    _original_class_name => $class,
             _traits => $traits,
             _resolved_traits => \@traits,
 	    %$args
-	);
+	});
     }
 
-    return $class->new(%$args);
-}
-
-# we override Catalyst::Component::BUILDARGS, which merges configs, because we
-# merge configs ourselves in COMPONENT. We also don't pass $app to ->new, so
-# Moose::Object::BUILDARGS works perfectly.
-sub BUILDARGS {
-    goto &Moose::Object::BUILDARGS;
+    return $class->new($args);
 }
 
 sub BUILD {
@@ -533,8 +525,9 @@ sub setup { 1 }
 
 =head2 ACCEPT_CONTEXT
 
-Point of extension for doing things at C<< $c->model >> time, returns the model
-instance, see L<Catalyst::Manual::Intro> for more information.
+Point of extension for doing things at C<< $c->model >> time with context,
+returns the model instance, see L<Catalyst::Manual::Intro/ACCEPT_CONTEXT> for
+more information.
 
 =cut
 
