@@ -4,8 +4,8 @@ name 'Catalyst-Model-DBIC-Schema';
 all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 
 requires 'DBIx::Class'           => '0.08103';
-requires 'Catalyst::Runtime'     => '5.80003';
-requires 'MooseX::Traits'        => '0.06';
+requires 'Catalyst::Runtime'     => '5.80005';
+requires 'MooseX::Traits'        => '0.05';
 requires 'Moose';
 requires 'Moose::Autobox';
 requires 'MooseX::Types';

@@ -472,13 +472,13 @@ sub COMPONENT {
 
     if (my $traits = delete $args->{traits}) {
         my @traits = $class->_resolve_traits($traits->flatten);
-	return $class->new_with_traits({
+	return $class->new_with_traits(
 	    traits => \@traits,
 	    _original_class_name => $class,
             _traits => $traits,
             _resolved_traits => \@traits,
 	    %$args
-	});
+	);
     }
 
     return $class->new($args);
