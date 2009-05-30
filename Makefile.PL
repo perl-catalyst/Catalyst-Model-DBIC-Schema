@@ -1,4 +1,4 @@
-use inc::Module::Install 0.90;
+use inc::Module::Install 0.91;
 
 name 'Catalyst-Model-DBIC-Schema';
 all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
