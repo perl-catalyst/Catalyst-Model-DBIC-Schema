@@ -486,7 +486,7 @@ sub COMPONENT {
 
 sub BUILD {
     my $self = shift;
-    my $class = ref $self;
+    my $class = $self->_original_class_name;
     my $schema_class = $self->schema_class;
 
     if( !$self->connect_info ) {
