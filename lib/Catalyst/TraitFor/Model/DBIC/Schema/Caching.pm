@@ -1,4 +1,4 @@
-package Catalyst::Model::DBIC::Schema::Trait::Caching;
+package Catalyst::TraitFor::Model::DBIC::Schema::Caching;
 
 use namespace::autoclean;
 use Moose::Role;
@@ -8,7 +8,7 @@ use MooseX::Types::Moose qw/Int Str/;
 
 =head1 NAME
 
-Catalyst::Model::DBIC::Schema::Trait::Caching - Query caching support for
+Catalyst::TraitFor::Model::DBIC::Schema::Caching - Query caching support for
 Catalyst::Model::DBIC::Schema
 
 =head1 SYNOPSIS

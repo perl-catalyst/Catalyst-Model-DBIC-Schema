@@ -1,4 +1,4 @@
-package Catalyst::Model::DBIC::Schema::Trait::Replicated;
+package Catalyst::TraitFor::Model::DBIC::Schema::Replicated;
 
 use namespace::autoclean;
 use Moose::Role;
@@ -9,7 +9,7 @@ use Catalyst::Model::DBIC::Schema::Types 'ConnectInfos';
 
 =head1 NAME
 
-Catalyst::Model::DBIC::Schema::Trait::Replicated - Replicated storage support for
+Catalyst::TraitFor::Model::DBIC::Schema::Replicated - Replicated storage support for
 L<Catalyst::Model::DBIC::Schema>
 
 =head1 SYNOPSiS

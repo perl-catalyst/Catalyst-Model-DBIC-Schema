@@ -13,6 +13,8 @@ use List::MoreUtils 'all';
 
 use namespace::clean -except => 'meta';
 
+class_type 'DBIx::Class::Schema';
+
 subtype SchemaClass,
     as ClassName;
 

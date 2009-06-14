@@ -2,8 +2,8 @@ package Catalyst::Model::DBIC::Schema;
 
 use Moose;
 use mro 'c3';
-with 'MooseX::Traits';
 extends 'Catalyst::Model';
+with 'CatalystX::Component::Traits';
 
 our $VERSION = '0.24';
 
@@ -308,17 +308,18 @@ supported:
 
 Array of Traits to apply to the instance. Traits are L<Moose::Role>s.
 
-They are relative to the C<< MyApp::Model::DB::Trait:: >>, then the C<<
-Catalyst::Model::DBIC::Schema::Trait:: >> namespaces, unless prefixed with C<+>
+They are relative to the C<< MyApp::TraitFor::Model::DBIC::Schema:: >>, then the C<<
+Catalyst::TraitFor::Model::DBIC::Schema:: >> namespaces, unless prefixed with C<+>
 in which case they are taken to be a fully qualified name. E.g.:
 
     traits Caching
-    traits +MyApp::DB::Trait::Foo
+    traits +MyApp::TraitFor::Model::Foo
 
 A new instance is created at application time, so any consumed required
 attributes, coercions and modifiers will work.
 
-Traits are applied at L<Catalyst::Component/COMPONENT> time using L<MooseX::Traits>.
+Traits are applied at L<Catalyst::Component/COMPONENT> time using
+L<CatalystX::Component::Traits>.
 
 C<ref $self> will be an anon class if any traits are applied, C<<
 $self->_original_class_name >> will be the original class.
@@ -330,9 +331,9 @@ Traits that come with the distribution:
 
 =over 4
 
-=item L<Catalyst::Model::DBIC::Schema::Trait::Caching>
+=item L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>
 
-=item L<Catalyst::Model::DBIC::Schema::Trait::Replicated>
+=item L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>
 
 =back
 
@@ -361,15 +362,17 @@ The model name L<Catalyst> uses to resolve this model, the part after
 C<::Model::> or C<::M::> in your class name. E.g. if your class name is
 C<MyApp::Model::DB> the L</model_name> will be C<DB>.
 
-=head2 _original_class_name
-
-The class name of your model before any L</traits> are applied. E.g.
-C<MyApp::Model::DB>.
-
 =head2 _default_cursor_class
 
 What to reset your L<DBIx::Class::Storage::DBI/cursor_class> to if a custom one
 doesn't work out. Defaults to L<DBIx::Class::Storage::DBI::Cursor>.
+
+=head1 ATTRIBUTES FROM L<MooseX::Traits::Pluggable>
+
+=head2 _original_class_name
+
+The class name of your model before any L</traits> are applied. E.g.
+C<MyApp::Model::DB>.
 
 =head2 _traits
 
@@ -448,41 +451,12 @@ has model_name => (
     lazy_build => 1,
 );
 
-has _traits => (is => 'ro', isa => ArrayRef);
-has _resolved_traits => (is => 'ro', isa => ArrayRef);
-
 has _default_cursor_class => (
     is => 'ro',
     isa => CursorClass,
     default => 'DBIx::Class::Storage::DBI::Cursor',
     coerce => 1
 );
-
-has _original_class_name => (
-    is => 'ro',
-    required => 1,
-    isa => Str,
-    default => sub { blessed $_[0] },
-);
-
-sub COMPONENT {
-    my ($class, $app, $args) = @_;
-
-    $args = $class->merge_config_hashes($class->config, $args);
-
-    if (my $traits = delete $args->{traits}) {
-        my @traits = $class->_resolve_traits($traits->flatten);
-	return $class->new_with_traits(
-	    traits => \@traits,
-	    _original_class_name => $class,
-            _traits => $traits,
-            _resolved_traits => \@traits,
-	    %$args
-	);
-    }
-
-    return $class->new($args);
-}
 
 sub BUILD {
     my $self = shift;
@@ -591,32 +565,6 @@ sub _reset_cursor_class {
     }
 }
 
-sub _resolve_traits {
-    my ($class, @names) = @_;
-    my $base  = 'Trait';
-
-    my @search_ns = grep !/^(?:Moose|Class::MOP)::/,
-        $class->meta->class_precedence_list;
-        
-    my @traits;
-
-    OUTER: for my $name (@names) {
-	if ($name =~ /^\+(.*)/) {
-	    push @traits, $1;
-	    next;
-	}
-	for my $ns (@search_ns) {
-	    my $full = "${ns}::${base}::${name}";
-	    if (eval { Class::MOP::load_class($full) }) {
-		push @traits, $full;
-		next OUTER;
-	    }
-	}
-    }
-
-    return @traits;
-}
-
 sub _build_model_name {
     my $self  = shift;
     my $class = $self->_original_class_name;
@@ -642,8 +590,8 @@ L<MooseX::Object::Pluggable>
 
 Traits:
 
-L<Catalyst::Model::DBIC::Schema::Trait::Caching>,
-L<Catalyst::Model::DBIC::Schema::Trait::Replicated>
+L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>,
+L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>
 
 =head1 AUTHOR
 
