@@ -33,6 +33,7 @@ loaded. A possible configuration would look like this:
     <backend>       
       class Cache::FastMmap
       unlink_on_exit 1
+      share_file /tmp/myapp_share
     </backend>
   </Plugin::Cache>
 
