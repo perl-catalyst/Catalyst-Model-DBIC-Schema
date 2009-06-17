@@ -5,7 +5,8 @@ use Moose::Role;
 use Moose::Autobox;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 
-use Catalyst::Model::DBIC::Schema::Types 'ConnectInfos';
+use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfos LoadedClass/;
+use MooseX::Types::Moose qw/Str HashRef/;
 
 =head1 NAME
 
@@ -16,7 +17,7 @@ L<Catalyst::Model::DBIC::Schema>
 
     __PACKAGE__->config({
         traits => ['Replicated']
-        connect_info => 
+        connect_info =>
             ['dbi:mysql:master', 'user', 'pass'],
         replicants => [
             ['dbi:mysql:slave1', 'user', 'pass'],
@@ -48,11 +49,36 @@ you do from replicants. Set to C<0> to turn off reads from master.
 
 Array of connect_info settings for every replicant.
 
+The following can be set via L<Catalyst::Model::DBIC::Schema/connect_info>, or
+as their own parameters. If set via separate parameters, they will override the
+settings in C<connect_info>.
+
+=head2 pool_type
+
+See L<DBIx::Class::Storage::DBI::Replicated/pool_type>.
+
+=head2 pool_args
+
+See L<DBIx::Class::Storage::DBI::Replicated/pool_args>.
+
+=head2 balancer_type
+
+See L<DBIx::Class::Storage::DBI::Replicated/balancer_type>.
+
+=head2 balancer_args
+
+See L<DBIx::Class::Storage::DBI::Replicated/balancer_args>.
+
 =cut
 
 has replicants => (
     is => 'ro', isa => ConnectInfos, coerce => 1, required => 1
 );
+
+has pool_type => (is => 'ro', isa => LoadedClass);
+has pool_args => (is => 'ro', isa => HashRef);
+has balancer_type => (is => 'ro', isa => Str);
+has balancer_args => (is => 'ro', isa => HashRef);
 
 after setup => sub {
     my $self = shift;
@@ -69,16 +95,26 @@ after setup => sub {
         $self->storage_type('::DBI::Replicated');
     }
 
-    $self->connect_info->{balancer_type} ||= '::Random'
-        unless $self->connect_info->{balancer_type};
+    my $connect_info = $self->connect_info;
 
-    unless ($self->connect_info->{balancer_args} &&
-            exists $self->connect_info->{balancer_args}{master_read_weight}) {
-        $self->connect_info->{balancer_args}{master_read_weight} = 1;
-    }
+    $connect_info->{pool_type} = $self->pool_type
+        if $self->pool_type;
+
+    $connect_info->{pool_args} = $self->pool_args
+        if $self->pool_args;
+
+    $connect_info->{balancer_type} = $self->balancer_type ||
+        $connect_info->{balancer_type} || '::Random';
+
+    $connect_info->{balancer_args} = $self->balancer_args ||
+        $connect_info->{balancer_args} || {};
+
+    $connect_info->{balancer_args}{master_read_weight} = 1
+        unless exists $connect_info->{balancer_args}{master_read_weight};
 };
 
 sub BUILD {}
+
 after BUILD => sub {
     my $self = shift;
 

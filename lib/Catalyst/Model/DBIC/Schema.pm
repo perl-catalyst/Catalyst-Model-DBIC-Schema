@@ -14,7 +14,7 @@ use DBIx::Class ();
 use Moose::Autobox;
 
 use Catalyst::Model::DBIC::Schema::Types
-    qw/ConnectInfo SchemaClass CursorClass/;
+    qw/ConnectInfo LoadedClass/;
 
 use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef/;
 
@@ -435,7 +435,7 @@ has schema => (is => 'rw', isa => 'DBIx::Class::Schema');
 
 has schema_class => (
     is => 'ro',
-    isa => SchemaClass,
+    isa => LoadedClass,
     coerce => 1,
     required => 1
 );
@@ -453,7 +453,7 @@ has model_name => (
 
 has _default_cursor_class => (
     is => 'ro',
-    isa => CursorClass,
+    isa => LoadedClass,
     default => 'DBIx::Class::Storage::DBI::Cursor',
     coerce => 1
 );

@@ -3,8 +3,7 @@ package Catalyst::TraitFor::Model::DBIC::Schema::Caching;
 use namespace::autoclean;
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
-use Catalyst::Model::DBIC::Schema::Types 'CursorClass';
-use MooseX::Types::Moose qw/Int Str/;
+use MooseX::Types::Moose 'Int';
 
 =head1 NAME
 

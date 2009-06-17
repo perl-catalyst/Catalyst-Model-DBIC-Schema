@@ -2,8 +2,7 @@ package  # hide from PAUSE
     Catalyst::Model::DBIC::Schema::Types;
 
 use MooseX::Types -declare => [qw/
-    ConnectInfo ConnectInfos Replicants SchemaClass CursorClass
-    CreateOption
+    ConnectInfo ConnectInfos Replicants LoadedClass CreateOption
 /];
 
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
@@ -15,17 +14,10 @@ use namespace::clean -except => 'meta';
 
 class_type 'DBIx::Class::Schema';
 
-subtype SchemaClass,
+subtype LoadedClass,
     as ClassName;
 
-coerce SchemaClass,
-    from Str,
-    via { Class::MOP::load_class($_); $_ };
-
-subtype CursorClass,
-    as ClassName;
-
-coerce CursorClass,
+coerce LoadedClass,
     from Str,
     via { Class::MOP::load_class($_); $_ };
 
