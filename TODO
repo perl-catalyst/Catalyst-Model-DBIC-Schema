@@ -1,1 +1,3 @@
 timezone and locale support for dates at helper time
+
+see why warnings get silenced (https://rt.cpan.org/Ticket/Display.html?id=47101)

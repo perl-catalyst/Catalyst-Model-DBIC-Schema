@@ -400,7 +400,7 @@ sub _get_dsn_user_pass {
 
     if ($dsn =~ /sqlite/i) {
         ($user, $password) = ('', '');
-        shift @$connect_info while $connect_info->[0] eq '';
+        shift @$connect_info while @$connect_info and $connect_info->[0] eq '';
     } else {
         ($user, $password) = splice @$connect_info, 0, 2;
     }
