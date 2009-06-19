@@ -12,6 +12,7 @@ requires 'MooseX::Types';
 requires 'namespace::autoclean';
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
+requires 'Tie::IxHash';
 
 test_requires 'Test::More';
 test_requires 'Test::Exception';
@@ -19,7 +20,6 @@ test_requires 'Test::Exception';
 feature 'Catalyst::Helper support',
     -default                      => 0,
     'Catalyst::Devel'             => '1.0',
-    'Tie::IxHash'                 => 0,
     'DBIx::Class::Schema::Loader' => '0.04005';
 
 feature 'Caching support',

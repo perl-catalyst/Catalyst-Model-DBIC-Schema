@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 use Carp;
 use Tie::IxHash ();

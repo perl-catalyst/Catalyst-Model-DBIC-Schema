@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.25  Fri Jun 19 08:35:38 PDT 2009
+	- fix dep on Tie::IxHash that made tests fail
+	- add more attributes to ::Replicated trait
         - Fixed infinte loop if SQLite connect_info has only a DSN (dandv, RT #47101)
 
 0.24  Tue Jun 16 06:18:58 PDT 2009
