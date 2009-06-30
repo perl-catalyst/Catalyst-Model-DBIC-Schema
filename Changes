@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.26  As yet unreleased
+    - Fix missing dep on Catalyst::Helper that made tests fail (RT 47449)
+
 0.25  Fri Jun 19 08:35:38 PDT 2009
 	- fix dep on Tie::IxHash that made tests fail
 	- add more attributes to ::Replicated trait
