@@ -16,7 +16,6 @@ requires 'Tie::IxHash';
 
 test_requires 'Test::More';
 test_requires 'Test::Exception';
-test_requires 'Catalyst::Helper';
 
 feature 'Catalyst::Helper support',
     -default                      => 0,

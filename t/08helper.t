@@ -4,11 +4,13 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/lib";
 
-use Test::More tests => 40;
+use Test::More;
 use Test::Exception;
 use Catalyst::Helper::Model::DBIC::Schema;
-use Catalyst::Helper;
 use Storable 'dclone';
+eval "use Catalyst::Helper";
+plan skip_all => 'Catalyst::Helper required for tests' if $@;
+plan tests => 40;
 
 my $helper      = Catalyst::Helper->new;
 $helper->{base} = $Bin;
