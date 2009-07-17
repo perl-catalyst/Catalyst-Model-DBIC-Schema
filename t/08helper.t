@@ -10,7 +10,7 @@ use Catalyst::Helper::Model::DBIC::Schema;
 use Storable 'dclone';
 eval "use Catalyst::Helper";
 plan skip_all => 'Catalyst::Helper required for tests' if $@;
-plan tests => 40;
+plan tests => 41;
 
 my $helper      = Catalyst::Helper->new;
 $helper->{base} = $Bin;
@@ -25,6 +25,9 @@ my $i;
 
 $i = instance(schema_class => 'ASchemaClass');
 is $i->old_schema, 1, '->load_classes detected correctly';
+
+throws_ok { $i = instance(args => [$static, 'DbI:SQLite:myapp.db']) }
+    qr/case matters/i, "wrong case for 'dbi:' DSN part";
 
 $i = instance(args => ['traits=Caching']);
 is_deeply $i->traits, ['Caching'], 'one trait';
