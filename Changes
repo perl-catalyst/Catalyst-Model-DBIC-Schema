@@ -1,14 +1,17 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
-0.26  As yet unreleased
-    - fix loading connect_info from schema-defined connection (RT 48084)
-    - Fix missing dep on Catalyst::Helper that made tests fail (RT 47449)
+0.26  Wed Jul 29 16:16:09 PDT 2009
+        - fix loading connect_info from schema-defined connection
+          (bluefeet, RT 48084)
+        - detect wrong case for "dbi:" DSN part in DBIC helper (caelum)
+        - Fix missing dep on Catalyst::Helper that made tests fail
+          (wintrmute, RT 47449)
 
 0.25  Fri Jun 19 08:35:38 PDT 2009
-	- fix dep on Tie::IxHash that made tests fail
-	- add more attributes to ::Replicated trait
+        - fix dep on Tie::IxHash that made tests fail
+        - add more attributes to ::Replicated trait
         - fixed infinte loop in helper if SQLite connect_info has only
-	  a DSN (dandv, RT #47101)
+          a DSN (dandv, RT #47101)
 
 0.24  Tue Jun 16 06:18:58 PDT 2009
         - Add tests for issues with Class::C3 which are caused to

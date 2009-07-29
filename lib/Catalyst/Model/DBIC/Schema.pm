@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 use namespace::autoclean;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
