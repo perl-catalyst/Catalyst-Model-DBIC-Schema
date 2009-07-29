@@ -189,7 +189,12 @@ sub BUILD {
 
             $helper->{loader_args} = $self->_build_helper_loader_args;
 
-            if (first { /^dbi:/i } @args) {
+            my $dbi_dsn_part;
+            if (first { ($dbi_dsn_part) = /^(dbi):/i } @args) {
+                die
+qq{DSN must start with 'dbi:' not '$dbi_dsn_part' (case matters!)}
+                    if $dbi_dsn_part ne 'dbi';
+
                 $helper->{setup_connect_info} = 1;
 
                 $helper->{connect_info} =
@@ -269,7 +274,7 @@ sub _read_loader_args {
 
     my %loader_args;
 
-    while (@$args && $args->[0] !~ /^dbi:/) {
+    while (@$args && $args->[0] !~ /^dbi:/i) {
         my ($key, $val) = split /=/, shift(@$args), 2;
 
         if ($self->_is_struct($val)) {

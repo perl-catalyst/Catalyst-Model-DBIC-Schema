@@ -442,7 +442,7 @@ has schema_class => (
 
 has storage_type => (is => 'rw', isa => Str);
 
-has connect_info => (is => 'ro', isa => ConnectInfo, coerce => 1);
+has connect_info => (is => 'rw', isa => ConnectInfo, coerce => 1);
 
 has model_name => (
     is => 'ro',

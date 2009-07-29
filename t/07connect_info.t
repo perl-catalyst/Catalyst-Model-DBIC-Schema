@@ -47,7 +47,7 @@ my @invalid = (
         { pg_enable_utf8 => 1 }, { AutoCommit => 1 }, { auto_savepoint => 1 }],
 );
 
-plan tests => @tests / 2 + @invalid + 1;
+plan tests => @tests / 2 + @invalid + 1 + 1;
 
 # ignore redefined warnings, and uninitialized warnings from old
 # ::Storage::DBI::Replicated
@@ -87,6 +87,14 @@ my $m = TryConnectInfos->new(
 is_deeply $m->replicants, [
     map $tests[$_], grep $_ % 2, 0 .. $#tests
 ], 'replicant connect_infos coerced correctly';
+
+{
+    ASchemaClass->connection( @{$tests[0]} );
+    my $m = instance();
+
+    is_deeply $m->connect_info, $tests[1],
+        'connect_info coerced correctly when defining connection in the schema class';
+}
 
 sub instance {
     Catalyst::Model::DBIC::Schema->new({

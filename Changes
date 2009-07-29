@@ -1,6 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
 0.26  As yet unreleased
+    - fix loading connect_info from schema-defined connection (RT 48084)
     - Fix missing dep on Catalyst::Helper that made tests fail (RT 47449)
 
 0.25  Fri Jun 19 08:35:38 PDT 2009
