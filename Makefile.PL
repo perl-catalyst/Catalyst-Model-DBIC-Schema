@@ -37,6 +37,7 @@ if(-e 'MANIFEST.SKIP') {
 
 auto_provides;
 auto_install;
-resources repository => 'http://dev.catalyst.perl.org/repos/Catalyst/trunk/Catalyst-Model-DBIC-Schema/';
+resources repository =>
+    'http://dev.catalyst.perl.org/repos/Catalyst/Catalyst-Model-DBIC-Schema/';
 
 WriteAll;
