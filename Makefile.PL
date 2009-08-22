@@ -13,6 +13,7 @@ requires 'namespace::autoclean';
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
 requires 'Tie::IxHash';
+requires 'Class::Inspector';
 
 test_requires 'Test::More';
 test_requires 'Test::Exception';

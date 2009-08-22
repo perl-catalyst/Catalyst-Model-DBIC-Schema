@@ -12,6 +12,7 @@ use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
 use Moose::Autobox;
+use Class::Inspector ();
 
 use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo LoadedClass/;
@@ -384,6 +385,15 @@ Traits you used resolved to full class names.
 
 =head1 METHODS
 
+Methods not listed here are delegated to the connected schema used by the model
+instance, so the following are equivalent:
+
+    $c->model('DB')->schema->my_accessor('foo');
+    # or
+    $c->model('DB')->my_accessor('foo');
+
+Methods on the model take precedence over schema methods.
+
 =head2 new
 
 Instantiates the Model based on the above-documented ->config parameters.
@@ -431,8 +441,6 @@ Used often for debugging and controlling transactions.
 
 =cut
 
-has schema => (is => 'rw', isa => 'DBIx::Class::Schema');
-
 has schema_class => (
     is => 'ro',
     isa => LoadedClass,
@@ -449,6 +457,13 @@ has model_name => (
     isa => Str,
     required => 1,
     lazy_build => 1,
+);
+
+# method names delegated to schema
+has _delegates => (
+    is => 'ro',
+    isa => ArrayRef,
+    lazy_build => 1
 );
 
 has _default_cursor_class => (
@@ -485,6 +500,12 @@ sub BUILD {
 
     $self->composed_schema($schema_class->compose_namespace($class));
 
+    $self->meta->add_attribute('schema',
+        is => 'rw',
+        isa => $self->schema_class,
+        handles => $self->_delegates
+    );
+
     $self->schema($self->composed_schema->clone);
 
     $self->schema->storage_type($self->storage_type)
@@ -498,10 +519,6 @@ sub BUILD {
 sub clone { shift->composed_schema->clone(@_); }
 
 sub connect { shift->composed_schema->connect(@_); }
-
-sub storage { shift->schema->storage(@_); }
-
-sub resultset { shift->schema->resultset(@_); }
 
 =head2 setup
 
@@ -571,6 +588,24 @@ sub _build_model_name {
     (my $model_name = $class) =~ s/^[\w:]+::(?:Model|M):://;
 
     return $model_name;
+}
+
+sub _build__delegates {
+    my $self = shift;
+
+# XXX change this to CMOP once CAG is updated
+    my @schema_methods = @{ Class::Inspector->methods($self->schema_class) };
+
+    my @my_methods     = $self->meta->get_all_method_names;
+    my %my_methods;
+    @my_methods{@my_methods} = ();
+
+    my @delegates;
+    for my $method (@schema_methods) {
+        push @delegates, $method unless exists $my_methods{$method};
+    }
+
+    return \@delegates;
 }
 
 __PACKAGE__->meta->make_immutable;

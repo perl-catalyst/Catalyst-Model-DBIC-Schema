@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+	- make schema a delegate for model
+
 0.26  Wed Jul 29 16:16:09 PDT 2009
         - fix loading connect_info from schema-defined connection
           (bluefeet, RT 48084)
