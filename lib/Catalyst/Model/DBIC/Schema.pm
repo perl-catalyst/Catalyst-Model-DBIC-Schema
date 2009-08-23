@@ -515,7 +515,7 @@ sub connect { shift->composed_schema->connect(@_); }
 
 =head2 setup
 
-Called at C<BUILD>> time before configuration, but after L</connect_info> is
+Called at C<BUILD> time before configuration, but after L</connect_info> is
 set. To do something after configuuration use C<< after BUILD => >>.
 
 =cut
@@ -627,7 +627,7 @@ Stuff related to DBIC and this Model style:
 
 L<DBIx::Class>, L<DBIx::Class::Schema>,
 L<DBIx::Class::Schema::Loader>, L<Catalyst::Helper::Model::DBIC::Schema>,
-L<MooseX::Object::Pluggable>
+L<CatalystX::Component::Traits>, L<MooseX::Traits::Pluggable>
 
 Traits:
 
@@ -636,11 +636,11 @@ L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>
 
 =head1 AUTHOR
 
-Brandon L Black, C<blblack at gmail.com>
+Brandon L Black C<blblack at gmail.com>
 
-Contributors:
+=head1 CONTRIBUTORS
 
-Rafael Kitover, C<rkitover at cpan.org>
+caelum: Rafael Kitover C<rkitover at cpan.org>
 
 =head1 COPYRIGHT
 

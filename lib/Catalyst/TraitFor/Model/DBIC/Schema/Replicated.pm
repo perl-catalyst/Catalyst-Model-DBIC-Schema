@@ -125,7 +125,7 @@ after BUILD => sub {
 
 L<Catalyst::Model::DBIC::Schema>, L<DBIx::Class>,
 L<DBIx::Class::Storage::DBI::Replicated>,
-L<Cache::FastMmap>, L<DBIx::Class::Cursor::Cached>
+L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>
 
 =head1 AUTHOR
 
