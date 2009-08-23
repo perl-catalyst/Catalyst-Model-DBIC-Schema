@@ -459,13 +459,6 @@ has model_name => (
     lazy_build => 1,
 );
 
-# method names delegated to schema
-has _delegates => (
-    is => 'ro',
-    isa => ArrayRef,
-    lazy_build => 1
-);
-
 has _default_cursor_class => (
     is => 'ro',
     isa => LoadedClass,
@@ -502,7 +495,7 @@ sub BUILD {
 
     $self->meta->add_attribute('schema',
         is => 'rw',
-        isa => $self->schema_class,
+        isa => 'DBIx::Class::Schema',
         handles => $self->_delegates
     );
 
@@ -590,13 +583,26 @@ sub _build_model_name {
     return $model_name;
 }
 
-sub _build__delegates {
+sub _delegates {
     my $self = shift;
 
 # XXX change this to CMOP once CAG is updated
     my @schema_methods = @{ Class::Inspector->methods($self->schema_class) };
 
-    my @my_methods     = $self->meta->get_all_method_names;
+# combine with any already added by other schemas
+    my @handles = eval {
+        @{ $self->meta->find_attribute_by_name('schema')->handles }
+    };
+
+# now kill the attribute, otherwise add_attribute in BUILD will not do the right
+# thing. May be a Moose bug.
+    eval { $self->meta->remove_attribute('schema') };
+
+    my %schema_methods;
+    @schema_methods{ @schema_methods, @handles } = ();
+    @schema_methods = keys %schema_methods;
+
+    my @my_methods = $self->meta->get_all_method_names;
     my %my_methods;
     @my_methods{@my_methods} = ();
 
