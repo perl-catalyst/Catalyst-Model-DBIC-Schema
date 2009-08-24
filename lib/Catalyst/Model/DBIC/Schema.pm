@@ -627,8 +627,7 @@ sub _pass_options_to_schema {
 
     for my $opt (keys %$self) {
         if (not exists $attributes{$opt}) {
-            die "Invalid schema option: $opt" unless $self->schema->can($opt);
-
+            next unless $self->schema->can($opt);
             $self->schema->$opt($self->{$opt});
         }
     }
