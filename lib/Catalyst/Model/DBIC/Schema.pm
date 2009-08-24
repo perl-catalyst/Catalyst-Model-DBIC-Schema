@@ -469,7 +469,7 @@ has _default_cursor_class => (
 );
 
 sub BUILD {
-    my $self = shift;
+    my ($self, $args) = @_;
     my $class = $self->_original_class_name;
     my $schema_class = $self->schema_class;
 
@@ -505,7 +505,7 @@ sub BUILD {
 
     $self->schema($self->composed_schema->clone);
 
-    $self->_pass_options_to_schema;
+    $self->_pass_options_to_schema($args);
 
     $self->schema->storage_type($self->storage_type)
         if $self->storage_type;
@@ -621,13 +621,16 @@ sub _delegates {
 }
 
 sub _pass_options_to_schema {
-    my $self = shift;
+    my ($self, $args) = @_;
 
-    my @attributes = map $_->name, $self->meta->get_all_attributes;
+    my @attributes = map {
+        $_->init_arg || ()
+    } $self->meta->get_all_attributes;
+
     my %attributes;
     @attributes{@attributes} = ();
 
-    for my $opt (keys %$self) {
+    for my $opt (keys %$args) {
         if (not exists $attributes{$opt}) {
             next unless $self->schema->can($opt);
             $self->schema->$opt($self->{$opt});
