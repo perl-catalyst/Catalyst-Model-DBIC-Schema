@@ -493,13 +493,17 @@ sub BUILD {
 
     $self->composed_schema($schema_class->compose_namespace($class));
 
+    $self->meta->make_mutable;
     $self->meta->add_attribute('schema',
         is => 'rw',
         isa => 'DBIx::Class::Schema',
         handles => $self->_delegates
     );
+    $self->meta->make_immutable;
 
     $self->schema($self->composed_schema->clone);
+
+    $self->_pass_options_to_schema;
 
     $self->schema->storage_type($self->storage_type)
         if $self->storage_type;
@@ -612,6 +616,22 @@ sub _delegates {
     }
 
     return \@delegates;
+}
+
+sub _pass_options_to_schema {
+    my $self = shift;
+
+    my @attributes = map $_->name, $self->meta->get_all_attributes;
+    my %attributes;
+    @attributes{@attributes} = ();
+
+    for my $opt (keys %$self) {
+        if (not exists $attributes{$opt}) {
+            die "Invalid schema option: $opt" unless $self->schema->can($opt);
+
+            $self->schema->$opt($self->{$opt});
+        }
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
