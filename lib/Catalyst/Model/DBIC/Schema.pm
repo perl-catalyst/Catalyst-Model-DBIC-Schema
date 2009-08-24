@@ -12,7 +12,6 @@ use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
 use Moose::Autobox;
-use Class::Inspector ();
 
 use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo LoadedClass/;
@@ -200,6 +199,8 @@ for more info.
 
 =head1 CONFIG PARAMETERS
 
+Any options in your config not listed here are passed to your schema.
+
 =head2 schema_class
 
 This is the classname of your L<DBIx::Class::Schema> Schema.  It needs
@@ -263,6 +264,7 @@ Or using L<Config::General>:
             on_connect_do   some SQL statement
             on_connect_do   another SQL statement
         </connect_info>
+        user_defined_schema_accessor foo
     </Model::FilmDB>
 
 or
@@ -276,14 +278,14 @@ Or using L<YAML>:
 
   Model::MyDB:
       schema_class: MyDB
+      traits: Caching
       connect_info:
           dsn: dbi:Oracle:mydb
           user: mtfnpy
           password: mypass
           LongReadLen: 1000000
           LongTruncOk: 1
-          on_connect_do: [ "alter session set nls_date_format = 'YYYY-MM-DD HH24:MI:SS'" ]
-          cursor_class: 'DBIx::Class::Cursor::Cached'
+          on_connect_call: 'datetime_setup'
 	  quote_char: '"'
 
 The old arrayref style with hashrefs for L<DBI> then L<DBIx::Class> options is also
@@ -590,8 +592,8 @@ sub _build_model_name {
 sub _delegates {
     my $self = shift;
 
-# XXX change this to CMOP once CAG is updated
-    my @schema_methods = @{ Class::Inspector->methods($self->schema_class) };
+    my $schema_meta = Class::MOP::Class->initialize($self->schema_class);
+    my @schema_methods = $schema_meta->get_all_method_names;
 
 # combine with any already added by other schemas
     my @handles = eval {
@@ -599,7 +601,7 @@ sub _delegates {
     };
 
 # now kill the attribute, otherwise add_attribute in BUILD will not do the right
-# thing. May be a Moose bug.
+# thing (it clears the handles for some reason.) May be a Moose bug.
     eval { $self->meta->remove_attribute('schema') };
 
     my %schema_methods;

@@ -6,6 +6,11 @@ all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 requires 'DBIx::Class'           => '0.08107';
 requires 'Catalyst::Runtime'     => '5.80005';
 requires 'CatalystX::Component::Traits' => '0.03';
+
+# XXX remove this once the dep in DBIC is updated, needed for schema
+# introspection to work.
+requires 'Class::Accessor::Grouped' => '0.09000';
+
 requires 'Moose';
 requires 'Moose::Autobox';
 requires 'MooseX::Types';
@@ -13,7 +18,6 @@ requires 'namespace::autoclean';
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
 requires 'Tie::IxHash';
-requires 'Class::Inspector';
 
 test_requires 'Test::More';
 test_requires 'Test::Exception';
