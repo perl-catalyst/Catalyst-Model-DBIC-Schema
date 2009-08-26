@@ -2,7 +2,6 @@ package Catalyst::TraitFor::Model::DBIC::Schema::Replicated;
 
 use namespace::autoclean;
 use Moose::Role;
-use Moose::Autobox;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 
 use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfos LoadedClass/;
@@ -118,7 +117,7 @@ sub BUILD {}
 after BUILD => sub {
     my $self = shift;
 
-    $self->storage->connect_replicants(map [ $_ ], $self->replicants->flatten);
+    $self->storage->connect_replicants(map [ $_ ], @{ $self->replicants });
 };
 
 =head1 SEE ALSO

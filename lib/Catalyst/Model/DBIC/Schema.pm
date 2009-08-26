@@ -5,13 +5,13 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.26';
+our $VERSION = '0.27';
+$VERSION = eval $VERSION;
 
 use namespace::autoclean;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
-use Moose::Autobox;
 
 use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo LoadedClass/;

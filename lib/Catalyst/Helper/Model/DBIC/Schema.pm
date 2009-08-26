@@ -4,7 +4,8 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.26';
+our $VERSION = '0.27';
+$VERSION = eval $VERSION;
 
 use Carp;
 use Tie::IxHash ();
@@ -12,7 +13,6 @@ use Data::Dumper ();
 use List::Util 'first';
 use MooseX::Types::Moose qw/Str HashRef Bool ArrayRef/;
 use Catalyst::Model::DBIC::Schema::Types 'CreateOption';
-use Moose::Autobox;
 use List::MoreUtils 'firstidx';
 use Scalar::Util 'looks_like_number';
 
@@ -161,7 +161,7 @@ sub mk_compclass {
 sub BUILD {
     my $self   = shift;
     my $helper = $self->helper;
-    my @args   = $self->args->flatten if $self->args;
+    my @args   = @{ $self->args || [] };
 
     $helper->{schema_class} = $self->schema_class;
 
@@ -174,7 +174,7 @@ sub BUILD {
         $self->traits(\@traits);
 
         $helper->{traits} = '['
-            .(join ',' => map { qq{'$_'} } ($self->traits->flatten))
+            .(join ',' => map { qq{'$_'} } @traits)
             .']';
 
         splice @args, $traits_idx, 1, ();
