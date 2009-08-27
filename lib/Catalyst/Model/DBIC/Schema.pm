@@ -666,9 +666,11 @@ Brandon L Black C<blblack at gmail.com>
 
 caelum: Rafael Kitover C<rkitover at cpan.org>
 
+Dan Dascalescu C<dandv at cpan.org>
+
 =head1 COPYRIGHT
 
-This program is free software, you can redistribute it and/or modify it
+This program is free software. You can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
