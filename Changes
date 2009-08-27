@@ -1,5 +1,9 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.28  Thu Aug 27 08:14:05 EDT 2009
+        - autobox issues in dep chain, bump CX::Component::Traits dep
+        (caelum)
+
 0.27  Wed Aug 26 09:09:44 EDT 2009
         - remove autobox usage due to reports of strange errors (caelum)
         - make schema a delegate for model, config too (caelum)

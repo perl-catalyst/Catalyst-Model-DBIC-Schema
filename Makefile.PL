@@ -5,7 +5,7 @@ all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 
 requires 'DBIx::Class'           => '0.08107';
 requires 'Catalyst::Runtime'     => '5.80005';
-requires 'CatalystX::Component::Traits' => '0.09';
+requires 'CatalystX::Component::Traits' => '0.10';
 
 # XXX remove this once the dep in DBIC is updated, needed for schema
 # introspection to work.
