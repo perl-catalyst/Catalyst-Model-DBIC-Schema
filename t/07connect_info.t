@@ -11,6 +11,8 @@ use ASchemaClass;
 
 # execise the connect_info coercion
 
+my $coderef = sub {};
+
 my @tests = (
     ['dbi:SQLite:foo.db', '', ''],
     { dsn => 'dbi:SQLite:foo.db', user => '', password => '' },
@@ -38,6 +40,9 @@ my @tests = (
         pg_enable_utf8 => 1, auto_savepoint => 1 } ],
     { dsn => 'dbi:Pg:dbname=foo', user => 'user', password => 'pass',
         pg_enable_utf8 => 1, auto_savepoint => 1 },
+
+    [$coderef, { pg_enable_utf8 => 1, auto_savepoint => 1 }],
+    { dbh_maker => $coderef, pg_enable_utf8 => 1, auto_savepoint => 1 },
 );
 
 my @invalid = (

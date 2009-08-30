@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.28';
+our $VERSION = '0.29';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -14,7 +14,7 @@ use Data::Dumper;
 use DBIx::Class ();
 
 use Catalyst::Model::DBIC::Schema::Types
-    qw/ConnectInfo LoadedClass/;
+    qw/ConnectInfo LoadedClass SchemaClass/;
 
 use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef/;
 
@@ -445,7 +445,7 @@ Used often for debugging and controlling transactions.
 
 has schema_class => (
     is => 'ro',
-    isa => LoadedClass,
+    isa => SchemaClass,
     coerce => 1,
     required => 1
 );
