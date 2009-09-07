@@ -3,7 +3,7 @@ use inc::Module::Install 0.91;
 name 'Catalyst-Model-DBIC-Schema';
 all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 
-requires 'DBIx::Class'           => '0.08110';
+requires 'DBIx::Class'           => '0.08111';
 requires 'Catalyst::Runtime'     => '5.80005';
 requires 'CatalystX::Component::Traits' => '0.10';
 
