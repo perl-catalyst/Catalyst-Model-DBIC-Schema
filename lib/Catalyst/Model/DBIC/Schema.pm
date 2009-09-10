@@ -668,6 +668,8 @@ caelum: Rafael Kitover C<rkitover at cpan.org>
 
 Dan Dascalescu C<dandv at cpan.org>
 
+Aran Deltac C<bluefeet@cpan.org>
+
 =head1 COPYRIGHT
 
 This program is free software. You can redistribute it and/or modify it
