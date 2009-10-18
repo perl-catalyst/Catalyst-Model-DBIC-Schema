@@ -5,7 +5,6 @@ use Moose;
 no warnings 'uninitialized';
 
 our $VERSION = '0.30';
-$VERSION = eval $VERSION;
 
 use Carp;
 use Tie::IxHash ();
