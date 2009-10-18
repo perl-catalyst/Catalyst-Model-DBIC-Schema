@@ -12,7 +12,6 @@ requires 'CatalystX::Component::Traits' => '0.10';
 requires 'Class::Accessor::Grouped' => '0.09000';
 
 requires 'Moose';
-requires 'Moose::Autobox';
 requires 'MooseX::Types';
 requires 'namespace::autoclean';
 requires 'Carp::Clan';
