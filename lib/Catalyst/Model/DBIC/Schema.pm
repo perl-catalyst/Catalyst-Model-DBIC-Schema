@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.29';
+our $VERSION = '0.30';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -546,8 +546,15 @@ sub _install_rs_models {
 
     my @sources = $self->schema->sources;
 
-    die "No sources found (did you forget to define your tables?)"
-        unless @sources;
+    unless (@sources) {
+        warn <<'EOF' unless $ENV{CMDS_NO_SOURCES};
+******************************* WARNING ***************************************
+* No sources found (did you forget to define your tables?)                    *
+*                                                                             *
+* To turn off this warning, set the CMDS_NO_SOURCES environment variable.     *
+*******************************************************************************
+EOF
+    }
 
     foreach my $moniker (@sources) {
         my $classname = "${class}::$moniker";
@@ -639,6 +646,17 @@ sub _pass_options_to_schema {
 }
 
 __PACKAGE__->meta->make_immutable;
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item CMDS_NO_SOURCES
+
+Set this variable if you will be using schemas with no sources (tables) to
+disable the warning. The warning is there because this is usually a mistake.
+
+=back
 
 =head1 SEE ALSO
 

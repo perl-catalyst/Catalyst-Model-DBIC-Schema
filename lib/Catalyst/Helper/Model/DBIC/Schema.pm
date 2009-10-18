@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.29';
+our $VERSION = '0.30';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -188,21 +188,21 @@ sub BUILD {
             $self->_parse_loader_args(\@args);
 
             $helper->{loader_args} = $self->_build_helper_loader_args;
-
-            my $dbi_dsn_part;
-            if (first { ($dbi_dsn_part) = /^(dbi):/i } @args) {
-                die
-qq{DSN must start with 'dbi:' not '$dbi_dsn_part' (case matters!)}
-                    if $dbi_dsn_part ne 'dbi';
-
-                $helper->{setup_connect_info} = 1;
-
-                $helper->{connect_info} =
-                    $self->_build_helper_connect_info(\@args);
-
-                $self->_parse_connect_info(\@args);
-            }
         }
+    }
+
+    my $dbi_dsn_part;
+    if (first { ($dbi_dsn_part) = /^(dbi):/i } @args) {
+        die
+qq{DSN must start with 'dbi:' not '$dbi_dsn_part' (case matters!)}
+            if $dbi_dsn_part ne 'dbi';
+
+        $helper->{setup_connect_info} = 1;
+
+        $helper->{connect_info} =
+            $self->_build_helper_connect_info(\@args);
+
+        $self->_parse_connect_info(\@args);
     }
 
     $helper->{generator} = ref $self;
