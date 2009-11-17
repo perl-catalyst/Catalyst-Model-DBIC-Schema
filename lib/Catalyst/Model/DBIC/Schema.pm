@@ -639,26 +639,24 @@ L<Catalyst::Authentication::Store::DBIx::Class> in MyApp.pm:
 
   ...
 
-  __PACKAGE__->config->{authentication} = 
-                {  
+  __PACKAGE__->config('Plugin::Authentication' =>
+                {
                     default_realm => 'members',
-                    realms => {
-                        members => {
-                            credential => {
-                                class => 'Password',
-                                password_field => 'password',
-                                password_type => 'hashed'
-                                password_hash_type => 'SHA-256'
-                            },
-                            store => {
-                                class => 'DBIx::Class',
-                                user_model => 'DB::User',
-                                role_relation => 'roles',
-                                role_field => 'rolename',                   
-                            }
+                    members => {
+                        credential => {
+                            class => 'Password',
+                            password_field => 'password',
+                            password_type => 'hashed'
+                            password_hash_type => 'SHA-256'
+                        },
+                        store => {
+                            class => 'DBIx::Class',
+                            user_model => 'DB::User',
+                            role_relation => 'roles',
+                            role_field => 'rolename',
                         }
                     }
-                };
+                });
 
 =head1 SEE ALSO
 
