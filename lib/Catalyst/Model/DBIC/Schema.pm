@@ -24,49 +24,35 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
 
 =head1 SYNOPSIS
 
-Manual creation of a DBIx::Class::Schema and a Catalyst::Model::DBIC::Schema:
-
-=over
+=over 4
 
 =item 1.
 
-Create the DBIx:Class schema in MyApp/Schema/FilmDB.pm:
+First, prepare your database schema using C<DBIx::Class>.
 
-  package MyApp::Schema::FilmDB;
-  use base qw/DBIx::Class::Schema/;
+(If you're not sure how to do this, then read L<DBIx::Class::Manual::Intro> first!)
 
-  __PACKAGE__->load_classes(qw/Actor Role/);
+This example assumes that you already have a schema called 
+C<MyApp::Schema::FilmDB>,
+which defines some tables in C<MyApp::Schema::FilmDB::Actor> and 
+C<MyApp::Schema::FilmDB::Film>.
 
 =item 2.
 
-Create some classes for the tables in the database, for example an 
-Actor in MyApp/Schema/FilmDB/Actor.pm:
-
-  package MyApp::Schema::FilmDB::Actor;
-  use base qw/DBIx::Class/
-
-  __PACKAGE__->load_components(qw/Core/);
-  __PACKAGE__->table('actor');
-
-  ...
-
-and a Role in MyApp/Schema/FilmDB/Role.pm:
-
-  package MyApp::Schema::FilmDB::Role;
-  use base qw/DBIx::Class/
-
-  __PACKAGE__->load_components(qw/Core/);
-  __PACKAGE__->table('role');
-
-  ...    
-
-Notice that the schema is in MyApp::Schema, not in MyApp::Model. This way it's 
-usable as a standalone module and you can test/run it without Catalyst. 
-
-=item 3.
-
-To expose it to Catalyst as a model, you should create a DBIC Model in
+Now, to expose it to Catalyst as a model, you should create a DBIC Model in
 MyApp/Model/FilmDB.pm:
+
+=over 8
+
+You can do this:
+
+=item * With the helper script
+
+    script/create.pl model FilmDB DBIC::Schema MyApp::Schema::FilmDB ...options...
+
+See L<Catalyst::Helper::Model::DBIC::Schema> for details.
+
+=item * Manually
 
   package MyApp::Model::FilmDB;
   use base qw/Catalyst::Model::DBIC::Schema/;
@@ -84,47 +70,29 @@ See below for a full list of the possible config parameters.
 
 =back
 
+=back
+
 Now you have a working Model which accesses your separate DBIC Schema. This can
-be used/accessed in the normal Catalyst manner, via $c->model():
+be used/accessed in the normal Catalyst manner, via C<< $c->model() >>:
 
-  my $actor = $c->model('FilmDB::Actor')->find(1);
+  my $db_model = $c->model('FilmDB');         # a Catalyst::Model
+  my $dbic     = $c->model('FilmDB')->schema; # the actual DBIC object
 
-You can also use it to set up DBIC authentication with 
-L<Catalyst::Authentication::Store::DBIx::Class> in MyApp.pm:
+The Model proxies the DBIC instance so you can do
 
-  package MyApp;
+  my $rs = $db_model->resultset('Actor');     # ... or ...
+  my $rs = $dbic    ->resultset('Actor');     # same!
 
-  use Catalyst qw/... Authentication .../;
+There is also a shortcut, which returns a L<DBIx::Class::ResultSet> directly,
+instead of a L<Catalyst::Model>:
 
-  ...
+  my $rs = $c->model('FilmDB::Actor');
 
-  __PACKAGE__->config->{authentication} = 
-                {  
-                    default_realm => 'members',
-                    realms => {
-                        members => {
-                            credential => {
-                                class => 'Password',
-                                password_field => 'password',
-                                password_type => 'hashed'
-                                password_hash_type => 'SHA-256'
-                            },
-                            store => {
-                                class => 'DBIx::Class',
-                                user_model => 'DB::User',
-                                role_relation => 'roles',
-                                role_field => 'rolename',                   
-                            }
-                        }
-                    }
-                };
+To find out more about which methods can be called on a ResultSet, or how to
+add your own methods to it, please see the ResultSet documentation in the
+L<DBIx::Class> distribution.
 
-C<< $c->model('Schema::Source') >> returns a L<DBIx::Class::ResultSet> for 
-the source name parameter passed. To find out more about which methods can 
-be called on a ResultSet, or how to add your own methods to it, please see 
-the ResultSet documentation in the L<DBIx::Class> distribution.
-
-Some examples are given below:
+=head2 Some examples:
 
   # to access schema methods directly:
   $c->model('FilmDB')->schema->source(...);
@@ -153,6 +121,8 @@ Some examples are given below:
   my $newconn = $c->model('FilmDB')->clone();
   $newconn->storage_type('::LDAP');
   $newconn->connection(...);
+
+To set up authentication, see L</"Setting up DBIC authentication"> below.
 
 =head1 DESCRIPTION
 
@@ -657,6 +627,38 @@ Set this variable if you will be using schemas with no sources (tables) to
 disable the warning. The warning is there because this is usually a mistake.
 
 =back
+
+=head1 Setting up DBIC authentication
+
+You can set this up with 
+L<Catalyst::Authentication::Store::DBIx::Class> in MyApp.pm:
+
+  package MyApp;
+
+  use Catalyst qw/... Authentication .../;
+
+  ...
+
+  __PACKAGE__->config->{authentication} = 
+                {  
+                    default_realm => 'members',
+                    realms => {
+                        members => {
+                            credential => {
+                                class => 'Password',
+                                password_field => 'password',
+                                password_type => 'hashed'
+                                password_hash_type => 'SHA-256'
+                            },
+                            store => {
+                                class => 'DBIx::Class',
+                                user_model => 'DB::User',
+                                role_relation => 'roles',
+                                role_field => 'rolename',                   
+                            }
+                        }
+                    }
+                };
 
 =head1 SEE ALSO
 
