@@ -35,7 +35,7 @@ if(-e 'MANIFEST.SKIP') {
     system("pod2text lib/Catalyst/Model/DBIC/Schema.pm > README");
 }
 
-clean_files 'README';
+realclean_files 'README';
 
 auto_provides;
 auto_install;
