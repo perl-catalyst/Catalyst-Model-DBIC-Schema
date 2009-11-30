@@ -128,9 +128,14 @@ L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>
 
 =head1 AUTHOR
 
-Rafael Kitover, C<rkitover at cpan.org>
+See L<Catalyst::Model::DBIC::Schema/AUTHOR> and
+L<Catalyst::Model::DBIC::Schema/CONTRIBUTORS>.
 
 =head1 COPYRIGHT
+
+See L<Catalyst::Model::DBIC::Schema/COPYRIGHT>.
+
+=head1 LICENSE
 
 This program is free software, you can redistribute it and/or modify it
 under the same terms as Perl itself.

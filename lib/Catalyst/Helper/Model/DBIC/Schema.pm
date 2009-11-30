@@ -4,7 +4,8 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.30';
+our $VERSION = '0.31';
+$VERSION = eval $VERSION;
 
 use Carp;
 use Tie::IxHash ();
@@ -567,11 +568,12 @@ L<DBIx::Class::Schema::Loader>, L<Catalyst::Model::DBIC::Schema>
 
 =head1 AUTHOR
 
-Brandon L Black, C<blblack@gmail.com>
+See L<Catalyst::Model::DBIC::Schema/AUTHOR> and
+L<Catalyst::Model::DBIC::Schema/CONTRIBUTORS>.
 
-Contributors:
+=head1 COPYRIGHT
 
-Rafael Kitover, C<rkitover at cpan.org>
+See L<Catalyst::Model::DBIC::Schema/COPYRIGHT>.
 
 =head1 LICENSE
 

@@ -6,6 +6,9 @@ Revision history for Perl extension Catalyst::Model::DBIC::Schema
           about the important things to know.
         - Convert Authentication Plugin configuration example to new style.
 
+0.31  Sun Oct 18 18:50:00 BST 2009
+        - update for copyright info
+
 0.30  Sun Oct 18 01:35:36 EDT 2009
         - change no sources error to a warning (with a way to turn it off)
         - write connect_info to Model without a create= option as well
