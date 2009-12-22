@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.31';
+our $VERSION = '0.32';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -691,6 +691,8 @@ bluefeet: Aran Deltac C<bluefeet@cpan.org>
 t0m: Tomas Doran C<bobtfish@bobtfish.net>
 
 osfameron: C<osfameron@cpan.org>
+
+Ozum Eldogan C<ozum@ozum.net>
 
 =head1 COPYRIGHT
 

@@ -1,10 +1,13 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.32  Mon Dec 21 21:33:53 EST 2009
         - Move documentation on setting up authentication into its own section
           for clarity.
         - Other misc documentation enhancements to make the docs more clear
           about the important things to know.
         - Convert Authentication Plugin configuration example to new style.
+        - Support Coderefs in loader options for helper
+          (patch from Ozum Eldogan ozum@ozum.net)
 
 0.31  Sun Oct 18 18:50:00 BST 2009
         - update for copyright info

@@ -14,7 +14,7 @@ requires 'Carp::Clan';
 requires 'List::MoreUtils';
 requires 'Tie::IxHash';
 
-test_requires 'Test::More';
+test_requires 'Test::More' => '0.92';
 test_requires 'Test::Exception';
 
 feature 'Catalyst::Helper support',

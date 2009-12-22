@@ -11,13 +11,12 @@ plan skip_all => 'Enable this optional test with $ENV{C_M_DBIC_SCHEMA_TESTAPP}'
 
 my $test_params = [
     [ 'TestSchema', 'DBIC::Schema', '' ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', q{fakedsn fakeuser fakepass "{ AutoCommit => 1 }"} ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', q{create=static traits=Caching moniker_map="{ roles => \"ROLE\" }" constraint="^users\z" dbi:SQLite:testdb.db} ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', q{create=static traits=Caching moniker_map="{ roles => \"ROLE\" }" constraint="^users\z" dbi:SQLite:testdb.db "" "" on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""} ],
-    [ 'TestSchemaDSN', 'DBIC::Schema', q{create=static traits=Caching moniker_map="{ roles => \"ROLE\" }" dbi:SQLite:testdb.db on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""} ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', qw/fakedsn fakeuser fakepass/, '{ AutoCommit => 1 }' ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', 'create=static', 'traits=Caching', 'moniker_map={ roles => "ROLE" }', 'constraint=^users\z', 'dbi:SQLite:testdb.db' ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', 'create=static', 'traits=Caching', 'moniker_map={ roles => "ROLE" }', 'constraint=^users\z', 'dbi:SQLite:testdb.db', '', '', 'on_connect_do=["select 1", "select 2"]', 'quote_char="' ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', 'create=static', 'traits=Caching', 'moniker_map={ roles => "ROLE" }', 'dbi:SQLite:testdb.db', 'on_connect_do=["select 1", "select 2"]', 'quote_char="' ],
+    [ 'TestSchemaDSN', 'DBIC::Schema', 'create=static', 'traits=Caching', 'inflect_singular=sub { $_[0] =~ /\A(.+?)(_id)?\z/; $1 }', q{moniker_map=sub { return join('', map ucfirst, split(/[\W_]+/, lc $_[0])); }}, 'dbi:SQLite:testdb.db' ],
 ];
-
-plan tests => (2 * @$test_params + 3);
 
 my $test_dir   = $FindBin::Bin;
 my $blib_dir   = File::Spec->catdir ($test_dir, '..', 'blib', 'lib');
@@ -52,17 +51,22 @@ EOF
 close $sql;
 
 foreach my $tparam (@$test_params) {
-   my ($model, $helper, $args) = @$tparam;
-   system("$^X -I$blib_dir $creator model $model $helper $model $args");
+   my ($model, $helper, @args) = @$tparam;
+
+   unlink for glob(File::Spec->catfile($schema_dir, 'Result', '*'));
+
+   system($^X, "-I$blib_dir", $creator, 'model', $model, $helper, $model, @args);
+
    my $model_path = File::Spec->catfile($model_dir, $model . '.pm');
    ok( -f $model_path, "$model_path is a file" );
    my $compile_rv = system("$^X -I$blib_dir -I$catlib_dir -c $model_path");
    ok($compile_rv == 0, "perl -c $model_path");
 
-   if ($args =~ /create=static/) {
+   if (grep /create=static/, @args) {
       my $glob = File::Spec->catfile($schema_dir, 'Result', '*');
       my $tables =()= glob($glob);
-      if ($args =~ /constraint/) {
+
+      if (grep /constraint/, @args) {
          is $tables, 1, 'constraint works';
       } else {
          is $tables, 2, 'correct number of tables';
@@ -70,11 +74,15 @@ foreach my $tparam (@$test_params) {
    }
 }
 
-chdir($test_dir);
+done_testing;
 
 sub rm_rf {
     my $name = $File::Find::name;
     if(-d $name) { rmdir $name or die "Cannot rmdir $name: $!" }
     else { unlink $name or die "Cannot unlink $name: $!" }
 }
-finddepth(\&rm_rf, $cat_dir);
+
+END {
+    chdir($test_dir);
+    finddepth(\&rm_rf, $cat_dir);
+}
