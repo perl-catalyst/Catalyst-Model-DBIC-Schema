@@ -24,53 +24,35 @@ Catalyst::Model::DBIC::Schema - DBIx::Class::Schema Model Class
 
 =head1 SYNOPSIS
 
-=over 4
+First, prepare your database schema using L<DBIx::Class>, see
+L<Catalyst::Helper::Model::DBIC::Schema> for how to generate a
+L<DBIx::Class::Schema> from your database using the Helper script, and
+L<DBIx::Class::Schema::Loader::Base>.
 
-=item 1.
+A typical usage of the helper script would be:
 
-First, prepare your database schema using C<DBIx::Class>.
+    script/myapp_create.pl model FilmDB DBIC::Schema MyApp::Schema::FilmDB \
+        create=static dbi:mysql:filmdb dbusername dbpass \
+        quote_char='`' name_sep='.'
 
-(If you're not sure how to do this, then read L<DBIx::Class::Manual::Intro> first!)
+If you are unfamiliar with L<DBIx::Class>, see L<DBIx::Class::Manual::Intro>
+first.
 
-This example assumes that you already have a schema called 
-C<MyApp::Schema::FilmDB>,
-which defines some tables in C<MyApp::Schema::FilmDB::Actor> and 
-C<MyApp::Schema::FilmDB::Film>.
+These examples assume that you already have a schema called
+C<MyApp::Schema::FilmDB>, which defines some Result classes for tables in
+C<MyApp::Schema::FilmDB::Result::Actor> and
+C<MyApp::Schema::FilmDB::Result::Film>. Either created by the helper script (as
+shown above) or manually.
 
-=item 2.
+The helper also creates a Model in C<lib/MyApp/Model/FilmDB.pm>, if you already
+have a schema you can create just the Model using:
 
-Now, to expose it to Catalyst as a model, you should create a DBIC Model in
-MyApp/Model/FilmDB.pm:
+    script/myapp_create.pl model FilmDB DBIC::Schema MyApp::Schema::FilmDB
+        dbi:mysql:filmdb dbusername dbpass
 
-=over 8
-
-You can do this:
-
-=item * With the helper script
-
-    script/create.pl model FilmDB DBIC::Schema MyApp::Schema::FilmDB ...options...
-
-See L<Catalyst::Helper::Model::DBIC::Schema> for details.
-
-=item * Manually
-
-  package MyApp::Model::FilmDB;
-  use base qw/Catalyst::Model::DBIC::Schema/;
-
-  __PACKAGE__->config(
-      schema_class => 'MyApp::Schema::FilmDB',
-      connect_info => {
-                        dsn => "DBI:...",
-                        user => "username",
-                        password => "password",
-                      }
-  );
-
-See below for a full list of the possible config parameters.
-
-=back
-
-=back
+The connect_info is optional and will be hardcoded into the Model if provided.
+It's better to configure it in your L<Catalyst> config file, which will also
+override any hardcoded config, see L</connect_info> for examples.
 
 Now you have a working Model which accesses your separate DBIC Schema. This can
 be used/accessed in the normal Catalyst manner, via C<< $c->model() >>:
@@ -78,7 +60,7 @@ be used/accessed in the normal Catalyst manner, via C<< $c->model() >>:
   my $db_model = $c->model('FilmDB');         # a Catalyst::Model
   my $dbic     = $c->model('FilmDB')->schema; # the actual DBIC object
 
-The Model proxies the DBIC instance so you can do
+The Model proxies to the C<Schema> instance so you can do:
 
   my $rs = $db_model->resultset('Actor');     # ... or ...
   my $rs = $dbic    ->resultset('Actor');     # same!
@@ -88,9 +70,17 @@ instead of a L<Catalyst::Model>:
 
   my $rs = $c->model('FilmDB::Actor');
 
-To find out more about which methods can be called on a ResultSet, or how to
-add your own methods to it, please see the ResultSet documentation in the
-L<DBIx::Class> distribution.
+See L<DBIx::Class::ResultSet> to find out more about which methods can be
+called on ResultSets.
+
+You can also define your own ResultSet methods to encapsulate the
+database/business logic of your applications. These go into, for example,
+C<lib/MyApp/Schema/FilmDB/ResultSet/Actor.pm>. The class must inherit from
+L<DBIx::Class::ResultSet> and is automatically loaded.
+
+Then call your methods like any other L<DBIx::Class::ResultSet> method:
+
+    $c->model('FilmDB::Actor')->SAG_members
 
 =head2 Some examples:
 
@@ -130,11 +120,11 @@ This is a Catalyst Model for L<DBIx::Class::Schema>-based Models.  See
 the documentation for L<Catalyst::Helper::Model::DBIC::Schema> for
 information on generating these Models via Helper scripts.
 
-When your Catalyst app starts up, a thin Model layer is created as an 
-interface to your DBIC Schema. It should be clearly noted that the model 
-object returned by C<< $c->model('FilmDB') >> is NOT itself a DBIC schema or 
-resultset object, but merely a wrapper proving L<methods|/METHODS> to access 
-the underlying schema. 
+When your Catalyst app starts up, a thin Model layer is created as an interface
+to your DBIC Schema. It should be clearly noted that the model object returned
+by C<< $c->model('FilmDB') >> is NOT itself a DBIC schema or resultset object,
+but merely a wrapper proving L<methods|/METHODS> to access the underlying
+schema (but also proxies other methods to the underlying schema.) 
 
 In addition to this model class, a shortcut class is generated for each 
 source in the schema, allowing easy and direct access to a resultset of the 
@@ -164,8 +154,15 @@ resultset object:
 
 In order to add methods to a DBIC resultset, you cannot simply add them to 
 the source (row, table) definition class; you must define a separate custom 
-resultset class. See L<DBIx::Class::Manual::Cookbook/"Predefined searches"> 
-for more info.
+resultset class. This is just a matter of making a
+C<lib/MyApp/Schema/ResultSet/Actor.pm> class that inherits from
+L<DBIx::Class::ResultSet>, if you are using
+L<DBIx::Class::Schema/load_namespaces>, the default for helper script generated
+schemas.
+
+See L<DBIx::Class::Manual::Cookbook/"Predefined searches"> 
+for information on definining your own L<DBIx::Class::ResultSet> classes for
+use with L<DBIx::Class::Schema/load_classes>, the old default.
 
 =head1 CONFIG PARAMETERS
 
@@ -465,13 +462,15 @@ sub BUILD {
 
     $self->composed_schema($schema_class->compose_namespace($class));
 
+    my $was_mutable = $self->meta->is_mutable;
+
     $self->meta->make_mutable;
     $self->meta->add_attribute('schema',
         is => 'rw',
         isa => 'DBIx::Class::Schema',
         handles => $self->_delegates
     );
-    $self->meta->make_immutable;
+    $self->meta->make_immutable unless $was_mutable;
 
     $self->schema($self->composed_schema->clone);
 
@@ -623,8 +622,9 @@ __PACKAGE__->meta->make_immutable;
 
 =item CMDS_NO_SOURCES
 
-Set this variable if you will be using schemas with no sources (tables) to
-disable the warning. The warning is there because this is usually a mistake.
+Set this variable if you will be using schemas with no sources (Result classes)
+to disable the warning. The warning is there because having no Result classes
+is usually a mistake.
 
 =back
 
@@ -674,7 +674,8 @@ L<CatalystX::Component::Traits>, L<MooseX::Traits::Pluggable>
 Traits:
 
 L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>,
-L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>
+L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>,
+L<Catalyst::TraitFor::Model::DBIC::Schema::QueryLog>
 
 =head1 AUTHOR
 
@@ -692,7 +693,7 @@ t0m: Tomas Doran C<bobtfish@bobtfish.net>
 
 osfameron: C<osfameron@cpan.org>
 
-Ozum Eldogan C<ozum@ozum.net>
+ozum: Ozum Eldogan C<ozum@ozum.net>
 
 =head1 COPYRIGHT
 

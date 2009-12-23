@@ -1,6 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
-0.32  Mon Dec 21 21:33:53 EST 2009
+0.32  Wed Dec 23 01:22:06 EST 2009
         - Move documentation on setting up authentication into its own section
           for clarity.
         - Other misc documentation enhancements to make the docs more clear
