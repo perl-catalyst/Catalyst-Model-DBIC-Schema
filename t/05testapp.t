@@ -83,6 +83,8 @@ sub rm_rf {
 }
 
 END {
-    chdir($test_dir);
-    finddepth(\&rm_rf, $cat_dir);
+    if ($ENV{C_M_DBIC_SCHEMA_TESTAPP}) {
+        chdir($test_dir);
+        finddepth(\&rm_rf, $cat_dir);
+    }
 }

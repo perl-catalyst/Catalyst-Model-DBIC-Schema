@@ -1,11 +1,12 @@
 package Catalyst::Model::DBIC::Schema;
 
+use 5.008_001;
 use Moose;
 use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.32';
+our $VERSION = '0.33';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -694,6 +695,8 @@ t0m: Tomas Doran C<bobtfish@bobtfish.net>
 osfameron: C<osfameron@cpan.org>
 
 ozum: Ozum Eldogan C<ozum@ozum.net>
+
+Pavel I. Shaydo C<zwon@trinitum.org>
 
 =head1 COPYRIGHT
 

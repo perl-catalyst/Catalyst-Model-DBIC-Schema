@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.33  Sat Dec 26 08:04:49 EST 2009
+        - fix test failure in 05testapp.t when env var not set (RT#53101)
+
 0.32  Wed Dec 23 01:22:06 EST 2009
         - Move documentation on setting up authentication into its own section
           for clarity.
