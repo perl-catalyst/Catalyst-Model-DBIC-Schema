@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.34  Sun Dec 27 03:49:34 EST 2009
+        - move schema proxying into SchemaProxy trait which is off by default
+
 0.33  Sat Dec 26 08:04:49 EST 2009
         - fix test failure in 05testapp.t when env var not set (RT#53101)
 
