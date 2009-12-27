@@ -4,6 +4,16 @@ name 'Catalyst-Model-DBIC-Schema';
 perl_version 5.008001;
 all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 
+warn <<EOF;
+****************************** !!! WARNING !!!  *******************************
+*                                                                             *
+* Automatic proxying to the Schema class has been DEPRECATED.                 *
+*                                                                             *
+* See "METHOD PROXYING" in perldoc Catalyst::Model::DBIC::Schema.             *
+*                                                                             *
+*******************************************************************************
+EOF
+
 requires 'DBIx::Class'           => '0.08114';
 requires 'Catalyst::Runtime'     => '5.80005';
 requires 'CatalystX::Component::Traits' => '0.14';

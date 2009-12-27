@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.33';
+our $VERSION = '0.34';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -59,11 +59,6 @@ be used/accessed in the normal Catalyst manner, via C<< $c->model() >>:
 
   my $db_model = $c->model('FilmDB');         # a Catalyst::Model
   my $dbic     = $c->model('FilmDB')->schema; # the actual DBIC object
-
-The Model proxies to the C<Schema> instance so you can do:
-
-  my $rs = $db_model->resultset('Actor');     # ... or ...
-  my $rs = $dbic    ->resultset('Actor');     # same!
 
 There is also a shortcut, which returns a L<DBIx::Class::ResultSet> directly,
 instead of a L<Catalyst::Model>:
@@ -124,7 +119,7 @@ When your Catalyst app starts up, a thin Model layer is created as an interface
 to your DBIC Schema. It should be clearly noted that the model object returned
 by C<< $c->model('FilmDB') >> is NOT itself a DBIC schema or resultset object,
 but merely a wrapper proving L<methods|/METHODS> to access the underlying
-schema (but also proxies other methods to the underlying schema.) 
+schema.
 
 In addition to this model class, a shortcut class is generated for each 
 source in the schema, allowing easy and direct access to a resultset of the 
@@ -165,8 +160,6 @@ for information on definining your own L<DBIx::Class::ResultSet> classes for
 use with L<DBIx::Class::Schema/load_classes>, the old default.
 
 =head1 CONFIG PARAMETERS
-
-Any options in your config not listed here are passed to your schema.
 
 =head2 schema_class
 
@@ -289,10 +282,6 @@ E.g.:
 A new instance is created at application time, so any consumed required
 attributes, coercions and modifiers will work.
 
-By default, the L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy> trait
-is loaded. It can be disabled by specifying C<-SchemaProxy> in traits. See
-L<CatalystX:Component::Traits/"TRAIT MERGING">.
-
 Traits are applied at L<Catalyst::Component/COMPONENT> time using
 L<CatalystX::Component::Traits>.
 
@@ -361,15 +350,6 @@ Traits you used resolved to full class names.
 
 =head1 METHODS
 
-Methods not listed here are delegated to the connected schema used by the model
-instance, so the following are equivalent:
-
-    $c->model('DB')->schema->my_accessor('foo');
-    # or
-    $c->model('DB')->my_accessor('foo');
-
-Methods on the model take precedence over schema methods.
-
 =head2 new
 
 Instantiates the Model based on the above-documented ->config parameters.
@@ -425,10 +405,6 @@ Used often for debugging and controlling transactions.
 
 =cut
 
-has '+_trait_merge' => (default => 1);
-
-__PACKAGE__->config->{traits} = ['SchemaProxy'];
-
 has schema_class => (
     is => 'ro',
     isa => SchemaClass,
@@ -469,7 +445,7 @@ sub BUILD {
             die "Either ->config->{connect_info} must be defined for $class"
                   . " or $schema_class must have connect info defined on it."
 		  . " Here's what we got:\n"
-		  . Dumper($self);
+		  . Dumper($args);
         }
     }
 
@@ -486,7 +462,8 @@ sub BUILD {
     $self->composed_schema($schema_class->compose_namespace($class))
         unless $is_installed;
 
-    $self->schema($self->composed_schema->clone);
+    $self->schema($self->composed_schema->clone)
+        unless $self->schema;
 
     $self->schema->storage_type($self->storage_type)
         if $self->storage_type;
@@ -500,7 +477,7 @@ sub clone { shift->composed_schema->clone(@_); }
 
 sub connect { shift->composed_schema->connect(@_); }
 
-# proxy methods, for when the SchemaProxy trait isn't loaded
+# some proxy methods, see also SchemaProxy
 
 sub resultset { shift->schema->resultset(@_); }
 
@@ -630,6 +607,14 @@ L<Catalyst::Authentication::Store::DBIx::Class> in MyApp.pm:
                         }
                     }
                 });
+
+=head1 METHOD PROXYING
+
+The automatic proxying to the underlying L<DBIx::Class::Schema> has been
+removed as of version C<0.34>, to enable this feature add C<SchemaProxy> to
+L</traits>.
+
+See L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy>.
 
 =head1 SEE ALSO
 

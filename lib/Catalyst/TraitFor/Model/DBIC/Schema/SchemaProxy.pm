@@ -3,6 +3,7 @@ package Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy;
 use namespace::autoclean;
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
+use Catalyst::Model::DBIC::Schema::Types 'Schema';
 
 =head1 NAME
 
@@ -11,27 +12,31 @@ Options from Model
 
 =head1 DESCRIPTION
 
-Allows you to call L<DBIx::Class::Schema> methods directly on the Model
-instance, and passes config options to the L<DBIx::Class::Schema> attributes at
-C<BUILD> time.
+Allows you to call your L<DBIx::Class::Schema> methods directly on the Model
+instance, and passes config options to the C<Schema> attributes at C<BUILD>
+time.
 
-This trait is loaded by default, but can be disabled by adding C<-SchemaProxy>
-to the L<Catalyst::Model::DBIC::Schema/traits> array.
+Methods and attributes local to your C<Model> take precedence over C<Schema>
+methods and attributes.
 
 =cut
 
 after setup => sub {
     my ($self, $args) = @_;
 
+    my $schema = $self->schema;
+
     my $was_mutable = $self->meta->is_mutable;
 
     $self->meta->make_mutable;
     $self->meta->add_attribute('schema',
         is => 'rw',
-        isa => 'DBIx::Class::Schema',
+        isa => Schema,
         handles => $self->_delegates # this removes the attribute too
     );
     $self->meta->make_immutable unless $was_mutable;
+
+    $self->schema($schema) if $schema;
 };
 
 after BUILD => sub {
