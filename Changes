@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.35  Sun Dec 27 04:50:53 EST 2009
+        - forgot to edit Changes on last upload
+
 0.34  Sun Dec 27 03:49:34 EST 2009
         - move schema proxying into SchemaProxy trait which is off by default
 

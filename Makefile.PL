@@ -7,9 +7,10 @@ all_from 'lib/Catalyst/Model/DBIC/Schema.pm';
 warn <<EOF;
 ****************************** !!! WARNING !!!  *******************************
 *                                                                             *
-* Automatic proxying to the Schema class has been DEPRECATED.                 *
+* Automatic proxying to the Schema class has been DISABLED.                   *
 *                                                                             *
-* See "METHOD PROXYING" in perldoc Catalyst::Model::DBIC::Schema.             *
+* See "METHOD PROXYING" in perldoc Catalyst::Model::DBIC::Schema for how to   *
+* turn it back on.                                                            *
 *                                                                             *
 *******************************************************************************
 EOF
