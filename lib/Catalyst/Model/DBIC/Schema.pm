@@ -1,6 +1,5 @@
 package Catalyst::Model::DBIC::Schema;
 
-use 5.008_001;
 use Moose;
 use mro 'c3';
 extends 'Catalyst::Model';
@@ -15,7 +14,7 @@ use Data::Dumper;
 use DBIx::Class ();
 
 use Catalyst::Model::DBIC::Schema::Types
-    qw/ConnectInfo LoadedClass SchemaClass/;
+    qw/ConnectInfo LoadedClass SchemaClass Schema/;
 
 use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef/;
 
@@ -279,15 +278,20 @@ supported:
 
 Array of Traits to apply to the instance. Traits are L<Moose::Role>s.
 
-They are relative to the C<< MyApp::TraitFor::Model::DBIC::Schema:: >>, then the C<<
-Catalyst::TraitFor::Model::DBIC::Schema:: >> namespaces, unless prefixed with C<+>
-in which case they are taken to be a fully qualified name. E.g.:
+They are relative to the C<< MyApp::TraitFor::Model::DBIC::Schema:: >>, then
+the C<< Catalyst::TraitFor::Model::DBIC::Schema:: >> namespaces, unless
+prefixed with C<+> in which case they are taken to be a fully qualified name.
+E.g.:
 
     traits Caching
     traits +MyApp::TraitFor::Model::Foo
 
 A new instance is created at application time, so any consumed required
 attributes, coercions and modifiers will work.
+
+By default, the L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy> trait
+is loaded. It can be disabled by specifying C<-SchemaProxy> in traits. See
+L<CatalystX:Component::Traits/"TRAIT MERGING">.
 
 Traits are applied at L<Catalyst::Component/COMPONENT> time using
 L<CatalystX::Component::Traits>.
@@ -305,6 +309,8 @@ Traits that come with the distribution:
 =item L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>
 
 =item L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>
+
+=item L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy>
 
 =back
 
@@ -404,12 +410,24 @@ Shortcut for ->schema->class
 
 Shortcut for ->schema->resultset
 
+=head2 txn_do
+
+Shortcut for ->schema->txn_do
+
+=head2 txn_scope_guard
+
+Shortcut for ->schema->txn_scope_guard
+
 =head2 storage
 
 Provides an accessor for the connected schema's storage object.
 Used often for debugging and controlling transactions.
 
 =cut
+
+has '+_trait_merge' => (default => 1);
+
+__PACKAGE__->config->{traits} = ['SchemaProxy'];
 
 has schema_class => (
     is => 'ro',
@@ -436,6 +454,8 @@ has _default_cursor_class => (
     coerce => 1
 );
 
+has schema => (is => 'rw', isa => Schema);
+
 sub BUILD {
     my ($self, $args) = @_;
     my $class = $self->_original_class_name;
@@ -459,40 +479,41 @@ sub BUILD {
         . " ".$self->connect_info->{cursor_class}.": $@";
     }
 
-    $self->setup;
+    $self->setup($args);
 
-    $self->composed_schema($schema_class->compose_namespace($class));
+    my $is_installed = defined $self->composed_schema;
 
-    my $was_mutable = $self->meta->is_mutable;
-
-    $self->meta->make_mutable;
-    $self->meta->add_attribute('schema',
-        is => 'rw',
-        isa => 'DBIx::Class::Schema',
-        handles => $self->_delegates
-    );
-    $self->meta->make_immutable unless $was_mutable;
+    $self->composed_schema($schema_class->compose_namespace($class))
+        unless $is_installed;
 
     $self->schema($self->composed_schema->clone);
-
-    $self->_pass_options_to_schema($args);
 
     $self->schema->storage_type($self->storage_type)
         if $self->storage_type;
 
     $self->schema->connection($self->connect_info);
 
-    $self->_install_rs_models;
+    $self->_install_rs_models unless $is_installed;
 }
 
 sub clone { shift->composed_schema->clone(@_); }
 
 sub connect { shift->composed_schema->connect(@_); }
 
+# proxy methods, for when the SchemaProxy trait isn't loaded
+
+sub resultset { shift->schema->resultset(@_); }
+
+sub txn_do { shift->schema->txn_do(@_); }
+
+sub txn_scope_guard { shift->schema->txn_scope_guard(@_); }
+
 =head2 setup
 
 Called at C<BUILD> time before configuration, but after L</connect_info> is
 set. To do something after configuuration use C<< after BUILD => >>.
+
+Receives a hashref of args passed to C<BUILD>.
 
 =cut
 
@@ -566,55 +587,6 @@ sub _build_model_name {
     return $model_name;
 }
 
-sub _delegates {
-    my $self = shift;
-
-    my $schema_meta = Class::MOP::Class->initialize($self->schema_class);
-    my @schema_methods = $schema_meta->get_all_method_names;
-
-# combine with any already added by other schemas
-    my @handles = eval {
-        @{ $self->meta->find_attribute_by_name('schema')->handles }
-    };
-
-# now kill the attribute, otherwise add_attribute in BUILD will not do the right
-# thing (it clears the handles for some reason.) May be a Moose bug.
-    eval { $self->meta->remove_attribute('schema') };
-
-    my %schema_methods;
-    @schema_methods{ @schema_methods, @handles } = ();
-    @schema_methods = keys %schema_methods;
-
-    my @my_methods = $self->meta->get_all_method_names;
-    my %my_methods;
-    @my_methods{@my_methods} = ();
-
-    my @delegates;
-    for my $method (@schema_methods) {
-        push @delegates, $method unless exists $my_methods{$method};
-    }
-
-    return \@delegates;
-}
-
-sub _pass_options_to_schema {
-    my ($self, $args) = @_;
-
-    my @attributes = map {
-        $_->init_arg || ()
-    } $self->meta->get_all_attributes;
-
-    my %attributes;
-    @attributes{@attributes} = ();
-
-    for my $opt (keys %$args) {
-        if (not exists $attributes{$opt}) {
-            next unless $self->schema->can($opt);
-            $self->schema->$opt($self->{$opt});
-        }
-    }
-}
-
 __PACKAGE__->meta->make_immutable;
 
 =head1 ENVIRONMENT
@@ -676,6 +648,7 @@ Traits:
 
 L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>,
 L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>,
+L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy>,
 L<Catalyst::TraitFor::Model::DBIC::Schema::QueryLog>
 
 =head1 AUTHOR

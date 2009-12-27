@@ -3,6 +3,7 @@ package  # hide from PAUSE
 
 use MooseX::Types -declare => [qw/
     ConnectInfo ConnectInfos Replicants SchemaClass LoadedClass CreateOption
+    Schema
 /];
 
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
@@ -24,6 +25,8 @@ subtype SchemaClass,
     where { $_->isa('DBIx::Class::Schema') };
 
 SchemaClass->coercion(LoadedClass->coercion);
+
+class_type Schema, { class => 'DBIx::Class::Schema' };
 
 subtype ConnectInfo,
     as HashRef,
