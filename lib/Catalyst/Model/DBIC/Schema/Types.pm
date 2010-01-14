@@ -57,6 +57,8 @@ coerce ConnectInfos,
     via { [ _coerce_connect_info_from_str() ] },
     from CodeRef,
     via { [ +{ dbh_maker => $_ } ]  },
+    from HashRef,
+    via { [ $_ ] },
     from ArrayRef,
     via { [ map {
         !ref $_ ? _coerce_connect_info_from_str()
