@@ -1,5 +1,9 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.36  Thu Jan 14 09:21:10 EST 2010
+        - upgrading a schema to use_namespaces=1 will also turn on
+          components=InflateColumn::DateTime (the default.)
+
 0.35  Sun Dec 27 04:50:53 EST 2009
         - forgot to edit Changes on last upload
 

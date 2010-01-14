@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.35';
+our $VERSION = '0.36';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -249,8 +249,10 @@ sub _parse_loader_args {
             if $@;
     }
 
-    my @components =
-    $self->_build_loader_components(delete $loader_args{components});
+    my @components = $self->_build_loader_components(
+        delete $loader_args{components},
+        $loader_args{use_namespaces},
+    );
 
     $self->components(\@components);
 
@@ -263,13 +265,13 @@ sub _parse_loader_args {
 
     %result = (
         relationships => 1,
-        (%loader_args ? %loader_args : ()),
         (!$self->old_schema ? (
                 use_namespaces => 1
             ) : ()),
         (@components ? (
                 components => \@components
-            ) : ())
+            ) : ()),
+        (%loader_args ? %loader_args : ()),
     );
 
     $self->loader_args(\%result);
@@ -316,9 +318,10 @@ sub _build_helper_loader_args {
 }
 
 sub _build_loader_components {
-    my ($self, $components) = @_;
+    my ($self, $components, $use_namespaces) = @_;
 
-    my @components = $self->old_schema ? () : ('InflateColumn::DateTime');
+    my @components = $self->old_schema && (not $use_namespaces) ? ()
+        : ('InflateColumn::DateTime');
 
     if ($components) {
         $components = [ $components ] if !ref $components;
