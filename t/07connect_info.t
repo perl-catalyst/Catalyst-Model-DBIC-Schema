@@ -52,8 +52,6 @@ my @invalid = (
         { pg_enable_utf8 => 1 }, { AutoCommit => 1 }, { auto_savepoint => 1 }],
 );
 
-plan tests => @tests / 2 + @invalid + 1 + 1;
-
 # ignore redefined warnings, and uninitialized warnings from old
 # ::Storage::DBI::Replicated
 local $SIG{__WARN__} = sub {
@@ -89,6 +87,11 @@ my $m = TryConnectInfos->new(
     replicants   => \@replicants
 );
 
+lives_and {
+    is_deeply(TryConnectInfos->new(replicants => $tests[1])->replicants,
+        [ $tests[1] ])
+} 'single replicant hashref coerces correctly';
+
 is_deeply $m->replicants, [
     map $tests[$_], grep $_ % 2, 0 .. $#tests
 ], 'replicant connect_infos coerced correctly';
@@ -100,6 +103,8 @@ is_deeply $m->replicants, [
     is_deeply $m->connect_info, $tests[1],
         'connect_info coerced correctly when defining connection in the schema class';
 }
+
+done_testing;
 
 sub instance {
     Catalyst::Model::DBIC::Schema->new({
