@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.37';
+our $VERSION = '0.38';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -484,6 +484,8 @@ sub resultset { shift->schema->resultset(@_); }
 sub txn_do { shift->schema->txn_do(@_); }
 
 sub txn_scope_guard { shift->schema->txn_scope_guard(@_); }
+
+sub storage { shift->schema->storage(@_); }
 
 =head2 setup
 

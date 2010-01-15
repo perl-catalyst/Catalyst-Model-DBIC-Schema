@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.38  Fri Jan 15 06:41:24 EST 2010
+        - re-add the 'storage' proxy method
+
 0.37  Thu Jan 14 10:20:43 EST 2010
         - support single replicant hashref from config
 
