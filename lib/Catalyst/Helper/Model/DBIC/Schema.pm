@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.38';
+our $VERSION = '0.39';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -488,7 +488,7 @@ sub _eval {
 
     return $code if looks_like_number $code;
 
-    return $code if $code =~ m{^[\w;:/]*\z};
+    return $code if not $self->_is_struct($code);
 
     return eval "{no strict; $code}";
 }
