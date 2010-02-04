@@ -10,7 +10,6 @@ use Catalyst::Helper::Model::DBIC::Schema;
 use Storable 'dclone';
 eval "use Catalyst::Helper";
 plan skip_all => 'Catalyst::Helper required for tests' if $@;
-plan tests => 41;
 
 my $helper      = Catalyst::Helper->new;
 $helper->{base} = $Bin;
@@ -118,6 +117,16 @@ is $i->helper->{connect_info}{name_sep}, 'q{.}',
     'connect_info name_sep as string';
 
 $i = instance(args => [
+    $static, $sqlite, 'on_connect_do=PRAGMA foreign_keys = ON'
+]);
+
+is $i->connect_info->{on_connect_do},
+    'PRAGMA foreign_keys = ON', 'on_connect_do string';
+
+is $i->helper->{connect_info}{on_connect_do},
+    'q{PRAGMA foreign_keys = ON}', 'on_connect_do string as string';
+
+$i = instance(args => [
     $static, 'components=TimeStamp', $sqlite, '', $on_connect_do,
     $quote_char, $name_sep
 ]);
@@ -155,6 +164,8 @@ is $i->helper->{connect_info}{auto_savepoint}, 'q{1}',
     'connect_info arg from extra hash as string';
 is $i->helper->{connect_info}{AutoCommit}, 'q{0}',
     'connect_info arg from extra hash as string';
+
+done_testing;
 
 sub instance {
     Catalyst::Helper::Model::DBIC::Schema->new(

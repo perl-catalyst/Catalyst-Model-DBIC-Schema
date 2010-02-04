@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.40  Wed Feb  3 23:12:16 EST 2010
+        - fix Replicated trait deps
+
 0.39  Mon Feb  1 10:08:51 EST 2010
         - better 'on_connect_do' parsing in Helper
 
