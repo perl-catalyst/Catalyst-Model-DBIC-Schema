@@ -8,7 +8,7 @@ requires 'DBIx::Class'           => '0.08114';
 requires 'Catalyst::Runtime'     => '5.80005';
 requires 'CatalystX::Component::Traits' => '0.14';
 
-requires 'Moose';
+requires 'Moose' => '0.90';
 requires 'MooseX::Types';
 requires 'namespace::autoclean';
 requires 'Carp::Clan';
@@ -29,7 +29,7 @@ feature 'Caching support',
 
 feature 'Replication support',
     -default                   => 0,
-    'MooseX::AttributeHelpers' => 0,
+    'namespace::clean'         => 0,
     'Hash::Merge'              => 0;
 
 if(-e 'MANIFEST.SKIP') {
