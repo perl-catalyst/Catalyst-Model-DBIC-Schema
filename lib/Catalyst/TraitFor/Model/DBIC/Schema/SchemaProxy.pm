@@ -13,11 +13,72 @@ Options from Model
 =head1 DESCRIPTION
 
 Allows you to call your L<DBIx::Class::Schema> methods directly on the Model
-instance, and passes config options to the C<Schema> attributes at C<BUILD>
-time.
+instance, and passes config options to your L<DBIx::Class::Schema> and
+L<DBIx::Class::ResultSet> attributes at C<BUILD> time.
 
-Methods and attributes local to your C<Model> take precedence over C<Schema>
-methods and attributes.
+Methods and attributes local to your C<Model> take precedence over
+L<DBIx::Class::Schema> or L<DBIx::Class::ResultSet> methods and attributes.
+
+=head1 CREATING SCHEMA CONFIG ATTRIBUTES
+
+To create attributes in your C<Schema.pm>, use either Moose or
+L<Class::Accessor::Grouped>, which is inherited from by all L<DBIx::Class>
+classes automatically. E.g.:
+
+    __PACKAGE__->mk_group_accessors(simple => qw/
+        config_key1
+        config_key2
+        ...
+    /);
+
+Or with L<Moose>:
+
+    use Moose;
+    has config_key1 => (is => 'rw', default => 'default_value');
+
+This code can be added after the md5sum on L<DBIx::Class::Schema::Loader>
+generated schemas.
+
+At app startup, any non-local options will be passed to these accessors, and can
+be accessed as usual via C<< $schema->config_key1 >>.
+
+These config values go into your C<Model::DB> block, along with normal config
+values.
+
+=head1 CREATING RESULTSET CONFIG ATTRIBUTES
+
+You can create classdata on L<DBIx::Class::ResultSet> classes to hold values
+from L<Catalyst> config.
+
+The code for this looks something like this:
+
+    package MySchema::ResultSet::Foo;
+
+    use base 'DBIx::Class::ResultSet';
+
+    __PACKAGE__->mk_group_accessors(inherited => qw/
+        rs_config_key1
+        rs_config_key2
+        ...
+    /);
+    __PACKAGE__->rs_config_key1('default_value');
+
+Or, if you prefer L<Moose>:
+
+    package MySchema::ResultSet::Foo;
+
+    use Moose;
+    use MooseX::NonMoose;
+    use MooseX::ClassAttribute;
+    extends 'DBIx::Class::ResultSet';
+
+    class_has rs_config_key1 => (is => 'rw', default => 'default_value');
+
+In your catalyst config, use the generated Model name as the config key, e.g.:
+
+    <Model::DB::Users>
+        strict_passwords 1
+    </Model::DB::Users>
 
 =cut
 
@@ -43,6 +104,13 @@ after BUILD => sub {
     my ($self, $args) = @_;
 
     $self->_pass_options_to_schema($args);
+
+    for my $source ($self->schema->sources) {
+        my $config_key = 'Model::' . $self->model_name . '::' . $source;
+        my $config = $self->app_class->config->{$config_key};
+        next unless $config;
+        $self->_pass_options_to_resultset($source, $config);
+    }
 };
 
 sub _delegates {
@@ -89,7 +157,26 @@ sub _pass_options_to_schema {
     for my $opt (keys %$args) {
         if (not exists $attributes{$opt}) {
             next unless $self->schema->can($opt);
-            $self->schema->$opt($self->{$opt});
+            $self->schema->$opt($args->{$opt});
+        }
+    }
+}
+
+sub _pass_options_to_resultset {
+    my ($self, $source, $args) = @_;
+
+    my @attributes = map {
+        $_->init_arg || ()
+    } $self->meta->get_all_attributes;
+
+    my %attributes;
+    @attributes{@attributes} = ();
+
+    for my $opt (keys %$args) {
+        if (not exists $attributes{$opt}) {
+            my $rs_class = $self->schema->source($source)->resultset_class;
+            next unless $rs_class->can($opt);
+            $rs_class->$opt($args->{$opt});
         }
     }
 }

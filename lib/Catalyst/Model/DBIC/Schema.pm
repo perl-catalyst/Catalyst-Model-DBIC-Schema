@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.40';
+our $VERSION = '0.41';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -348,6 +348,13 @@ Unresolved arrayref of traits passed in the config.
 
 Traits you used resolved to full class names.
 
+=head1 CONFIGURING YOUR SCHEMA AND RESULTSETS
+
+See the documentation for
+L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy> for instructions on how
+to pass config values from your L<Catalyst> config to your
+L<DBIx::Class::Schema> and/or L<DBIx::Class::ResultSet> classes.
+
 =head1 METHODS
 
 =head2 new
@@ -401,7 +408,8 @@ Shortcut for ->schema->txn_scope_guard
 =head2 storage
 
 Provides an accessor for the connected schema's storage object.
-Used often for debugging and controlling transactions.
+
+See L<DBIx::Class::Storage> and L<DBIx::Class::Storage::DBI>.
 
 =cut
 
@@ -431,6 +439,14 @@ has _default_cursor_class => (
 );
 
 has schema => (is => 'rw', isa => Schema);
+
+my $app_class;
+
+before COMPONENT => sub {
+    $app_class = ref $_[1] || $_[1];
+};
+
+sub app_class { $app_class }
 
 sub BUILD {
     my ($self, $args) = @_;
@@ -660,7 +676,7 @@ Pavel I. Shaydo C<zwon@trinitum.org>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006 - 2009
+Copyright (c) 2006 - 2010
 the Catalyst::Model::DBIC::Schema L</AUTHOR> and L</CONTRIBUTORS>
 as listed above.
 
@@ -672,4 +688,4 @@ under the same terms as Perl itself.
 =cut
 
 1;
-# vim:sts=4 sw=4 et:
+# vim:sts=4 sw=4 et tw=80:

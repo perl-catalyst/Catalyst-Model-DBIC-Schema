@@ -8,8 +8,10 @@ use Test::More;
 use Test::Exception;
 use Catalyst::Model::DBIC::Schema;
 use ASchemaClass;
+use AnotherSchemaClass;
 
-plan tests => 4;
+# reusing the same app for 2 models, gets a redefined warning
+$SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
 
 ok((my $m = instance(a_schema_option => 'mtfnpy')), 'instance');
 
@@ -19,8 +21,15 @@ lives_ok { $m->a_schema_option('pass the crack pipe') } 'delegate called';
 
 is $m->schema->a_schema_option, 'pass the crack pipe', 'delegation works';
 
+ok(($m = instance(schema_class => 'AnotherSchemaClass')), 'instance');
+
+is $m->resultset('Users')->rs_config_option, 'configured rs value',
+    'ResultSet option passed from config';
+
+done_testing;
+
 sub instance {
-    Catalyst::Model::DBIC::Schema->COMPONENT('MyApp', {
+    MyApp::Model::DB->COMPONENT('MyApp', {
         traits => 'SchemaProxy',
         schema_class => 'ASchemaClass',
         connect_info => ['dbi:SQLite:foo.db', '', ''],
@@ -28,4 +37,17 @@ sub instance {
     })
 }
 
-{ package MyApp; use Catalyst; }
+BEGIN {
+    package MyApp;
+    use Catalyst;
+    __PACKAGE__->config({
+        'Model::DB::Users' => {
+            rs_config_option => 'configured rs value',
+        },
+    });
+}
+
+{
+    package MyApp::Model::DB;
+    use base 'Catalyst::Model::DBIC::Schema';
+}
