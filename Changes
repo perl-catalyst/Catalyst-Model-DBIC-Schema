@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.42  Sat Jul 24 23:14:27 UTC 2010
+        - add use_moose=1 to loader options by default for create=static
+
 0.41  Wed Apr 28 08:42:13 EDT 2010
         - allow configuring ResultSets using the SchemaProxy trait
 

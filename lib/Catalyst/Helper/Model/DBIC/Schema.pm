@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.41';
+our $VERSION = '0.42';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -265,6 +265,7 @@ sub _parse_loader_args {
 
     %result = (
         relationships => 1,
+        use_moose => 1,
         (!$self->old_schema ? (
                 use_namespaces => 1
             ) : ()),
