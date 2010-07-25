@@ -21,7 +21,9 @@ test_requires 'Test::Exception';
 feature 'Catalyst::Helper support',
     -default                      => 0,
     'Catalyst::Devel'             => '1.0',
-    'DBIx::Class::Schema::Loader' => '0.04005';
+    'DBIx::Class::Schema::Loader' => '0.04005',
+    'MooseX::NonMoose'            => 0,
+;
 
 feature 'Caching support',
     -default                      => 0,

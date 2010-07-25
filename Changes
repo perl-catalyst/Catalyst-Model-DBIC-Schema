@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.43  Sun Jul 25 01:00:34 UTC 2010
+        - add dep for MooseX::NonMoose for the use_moose=1 option
+
 0.42  Sat Jul 24 23:14:27 UTC 2010
         - add use_moose=1 to loader options by default for create=static
 

@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.42';
+our $VERSION = '0.43';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
