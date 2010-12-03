@@ -266,6 +266,7 @@ sub _parse_loader_args {
     %result = (
         relationships => 1,
         use_moose => 1,
+        col_collision_map => 'column_%s',
         (!$self->old_schema ? (
                 use_namespaces => 1
             ) : ()),
