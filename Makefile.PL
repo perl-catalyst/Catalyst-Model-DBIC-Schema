@@ -14,6 +14,7 @@ requires 'namespace::autoclean';
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
 requires 'Tie::IxHash';
+requires 'Try::Tiny';
 
 test_requires 'Test::More' => '0.94';
 test_requires 'Test::Exception';

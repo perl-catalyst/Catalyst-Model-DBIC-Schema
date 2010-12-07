@@ -1,6 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - do not upgrade non-Moose schemas to use_moose=1 (RT#60558)
         - added col_collision_map => 'column_%s' as default loader option
+          (will take effect on release of loader 0.07003)
 
 0.43  Sun Jul 25 01:00:34 UTC 2010
         - add dep for MooseX::NonMoose for the use_moose=1 option

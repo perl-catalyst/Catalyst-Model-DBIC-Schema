@@ -53,7 +53,7 @@ close $sql;
 foreach my $tparam (@$test_params) {
    my ($model, $helper, @args) = @$tparam;
 
-   unlink for glob(File::Spec->catfile($schema_dir, 'Result', '*'));
+   cleanup_schema();
 
    system($^X, "-I$blib_dir", $creator, 'model', $model, $helper, $model, @args);
 
@@ -63,14 +63,53 @@ foreach my $tparam (@$test_params) {
    ok($compile_rv == 0, "perl -c $model_path");
 
    if (grep /create=static/, @args) {
-      my $glob = File::Spec->catfile($schema_dir, 'Result', '*');
-      my $tables =()= glob($glob);
+      my @result_files = result_files();
 
       if (grep /constraint/, @args) {
-         is $tables, 1, 'constraint works';
+         is scalar @result_files, 1, 'constraint works';
       } else {
-         is $tables, 2, 'correct number of tables';
+         is scalar @result_files, 2, 'correct number of tables';
       }
+
+      for my $file (@result_files) {
+         my $code = code_for($file);
+
+         like $code, qr/use Moose;\n/, 'use_moose enabled';
+         like $code, qr/__PACKAGE__->meta->make_immutable;\n/, 'use_moose enabled';
+      }
+   }
+}
+
+# Test that use_moose=1 is not applied to existing non-moose schemas (RT#60558)
+{
+   cleanup_schema();
+
+   system($^X, "-I$blib_dir", $creator, 'model',
+      'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
+      'create=static', 'use_moose=0', 'dbi:SQLite:testdb.db'
+   );
+
+   my @result_files = result_files();
+
+   for my $file (@result_files) {
+      my $code = code_for($file);
+
+      unlike $code, qr/use Moose;\n/, 'non use_moose=1 schema';
+      unlike $code, qr/__PACKAGE__->meta->make_immutable;\n/, 'non use_moose=1 schema';
+   }
+
+   system($^X, "-I$blib_dir", $creator, 'model',
+      'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
+      'create=static', 'dbi:SQLite:testdb.db'
+   );
+
+   for my $file (@result_files) {
+      my $code = code_for($file);
+
+      unlike $code, qr/use Moose;\n/,
+         'non use_moose=1 schema not upgraded to use_moose=1';
+      unlike $code, qr/__PACKAGE__->meta->make_immutable;\n/,
+         'non use_moose=1 schema not upgraded to use_moose=1';
    }
 }
 
@@ -82,9 +121,33 @@ sub rm_rf {
     else { unlink $name or die "Cannot unlink $name: $!" }
 }
 
+sub cleanup_schema {
+   return unless -d $schema_dir;
+   finddepth(\&rm_rf, $schema_dir);
+   unlink "${schema_dir}.pm";
+}
+
+sub code_for {
+   my $file = shift;
+
+   open my $fh, '<', $file;
+   my $code = do { local $/; <$fh> };
+   close $fh;
+
+   return $code;
+}
+
+sub result_files {
+   my $glob = File::Spec->catfile($schema_dir, 'Result', '*');
+
+   return glob($glob);
+}
+
 END {
     if ($ENV{C_M_DBIC_SCHEMA_TESTAPP}) {
         chdir($test_dir);
         finddepth(\&rm_rf, $cat_dir);
     }
 }
+
+# vim:sts=3 sw=3 et tw=80:

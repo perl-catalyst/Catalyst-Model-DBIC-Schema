@@ -15,6 +15,8 @@ use MooseX::Types::Moose qw/Str HashRef Bool ArrayRef/;
 use Catalyst::Model::DBIC::Schema::Types 'CreateOption';
 use List::MoreUtils 'firstidx';
 use Scalar::Util 'looks_like_number';
+use File::Find 'finddepth';
+use Try::Tiny;
 
 =head1 NAME
 
@@ -143,6 +145,7 @@ has schema_class => (is => 'ro', isa => Str, required => 1);
 has loader_args => (is => 'rw', isa => HashRef);
 has connect_info => (is => 'rw', isa => HashRef);
 has old_schema => (is => 'rw', isa => Bool, lazy_build => 1);
+has is_moose_schema => (is => 'rw', isa => Bool, lazy_build => 1);
 has components => (is => 'rw', isa => ArrayRef);
 
 =head1 METHODS
@@ -265,7 +268,7 @@ sub _parse_loader_args {
 
     %result = (
         relationships => 1,
-        use_moose => 1,
+        use_moose => $self->is_moose_schema ? 1 : 0,
         col_collision_map => 'column_%s',
         (!$self->old_schema ? (
                 use_namespaces => 1
@@ -397,6 +400,35 @@ sub _build_old_schema {
     }
 
     0;
+}
+
+sub _build_is_moose_schema {
+    my $self = shift;
+
+    my @schema_parts = split '::', $self->schema_class;
+    my $schema_dir =
+        File::Spec->catfile($self->helper->{base}, 'lib', @schema_parts);
+
+    # assume yes for new schemas
+    return 1 if not -d $schema_dir;
+
+    my $uses_moose = 1;
+
+    try {
+        finddepth(sub {
+            open my $fh, '<', $File::Find::name
+                or die "Could not open $File::Find::name: $!";
+
+            my $code = do { local $/; <$fh> };
+            close $fh;
+
+            $uses_moose = 0 if $code !~ /\nuse Moose;\n/;
+
+            die;
+        }, $schema_dir);
+    };
+
+    return $uses_moose;
 }
 
 sub _data_struct_to_string {
