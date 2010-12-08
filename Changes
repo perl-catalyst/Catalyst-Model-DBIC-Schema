@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - make use_moose detection more robust
+
 0.45  Wed Dec  8 12:05:58 UTC 2010
         - fix bug where non-result files were picked up for Moose check
 

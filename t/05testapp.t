@@ -113,6 +113,43 @@ foreach my $tparam (@$test_params) {
    }
 }
 
+# Test that a moose schema is not detected as a non-moose schema due to an
+# errant file.
+{
+   cleanup_schema();
+
+   system($^X, "-I$blib_dir", $creator, 'model',
+      'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
+      'create=static', 'dbi:SQLite:testdb.db'
+   );
+
+   mkdir "$schema_dir/.svn";
+   open my $fh, '>', "$schema_dir/.svn/foo"
+      or die "Could not open $schema_dir/.svn/foo for writing: $!";
+   print $fh "gargle\n";
+   close $fh;
+
+   mkdir "$schema_dir/Result/.svn";
+   open $fh, '>', "$schema_dir/Result/.svn/foo"
+      or die "Could not open $schema_dir/Result/.svn/foo for writing: $!";
+   print $fh "hlagh\n";
+   close $fh;
+
+   system($^X, "-I$blib_dir", $creator, 'model',
+      'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
+      'create=static', 'dbi:SQLite:testdb.db'
+   );
+
+   for my $file (result_files()) {
+      my $code = code_for($file);
+
+      like $code, qr/use Moose;\n/,
+         'use_moose detection not confused by version control files';
+      like $code, qr/__PACKAGE__->meta->make_immutable;\n/,
+         'use_moose detection not confused by version control files';
+   }
+}
+
 done_testing;
 
 sub rm_rf {

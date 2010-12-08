@@ -17,6 +17,7 @@ use List::MoreUtils 'firstidx';
 use Scalar::Util 'looks_like_number';
 use File::Find 'finddepth';
 use Try::Tiny;
+use Cwd 'getcwd';
 
 =head1 NAME
 
@@ -146,6 +147,7 @@ has loader_args => (is => 'rw', isa => HashRef);
 has connect_info => (is => 'rw', isa => HashRef);
 has old_schema => (is => 'rw', isa => Bool, lazy_build => 1);
 has is_moose_schema => (is => 'rw', isa => Bool, lazy_build => 1);
+has result_namespace => (is => 'rw', isa => Str, lazy_build => 1);
 has components => (is => 'rw', isa => ArrayRef);
 
 =head1 METHODS
@@ -389,30 +391,24 @@ sub _build_helper_connect_info {
 sub _build_old_schema {
     my $self = shift;
 
-    my @schema_pm   = split '::', $self->schema_class;
-    $schema_pm[-1] .= '.pm';
-    my $schema_file =
-    File::Spec->catfile($self->helper->{base}, 'lib', @schema_pm);
-
-    if (-f $schema_file) {
-        my $schema_code = do { local (@ARGV, $/) = $schema_file; <> };
-        return 1 if $schema_code =~ /->load_classes/;
-    }
-
-    0;
+    return $self->result_namespace eq '' ? 1 : 0;
 }
 
 sub _build_is_moose_schema {
     my $self = shift;
 
     my @schema_parts = split '::', $self->schema_class;
-    my $schema_dir =
-        File::Spec->catfile($self->helper->{base}, 'lib', @schema_parts);
+
+    my $result_dir = File::Spec->catfile(
+        $self->helper->{base}, 'lib', @schema_parts, $self->result_namespace
+    );
 
     # assume yes for new schemas
-    return 1 if not -d $schema_dir;
+    return 1 if not -d $result_dir;
 
     my $uses_moose = 1;
+
+    my $cwd = getcwd;
 
     try {
         finddepth(sub {
@@ -427,10 +423,45 @@ sub _build_is_moose_schema {
             $uses_moose = 0 if $code !~ /\nuse Moose;\n/;
 
             die;
-        }, $schema_dir);
+        }, $result_dir);
     };
 
+    chdir $cwd;
+
     return $uses_moose;
+}
+
+sub _build_result_namespace {
+    my $self = shift;
+
+    my @schema_parts = split '::', $self->schema_class;
+    my $schema_pm =
+        File::Spec->catfile($self->helper->{base}, 'lib', @schema_parts) . '.pm';
+
+    if (not -f $schema_pm) {
+        try { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
+
+        return 'Result' if $@;
+
+        return DBIx::Class::Schema::Loader->VERSION('0.05') ? 'Result' : '';
+    }
+
+    open my $fh, '<', $schema_pm or die "Could not open $schema_pm: $!";
+    my $code = do { local $/; <$fh> };
+    close $fh;
+
+    my ($result_namespace) = $code =~ /result_namespace => '([^']+)'/;
+
+    if (not $result_namespace) {
+        if ($code =~ /->load_classes/) {
+            $result_namespace = '';
+        }
+        else {
+            $result_namespace = 'Result';
+        }
+    }
+
+    return $result_namespace;
 }
 
 sub _data_struct_to_string {
@@ -557,7 +588,7 @@ sub _gen_static_schema {
 
     my $schema_dir = File::Spec->catfile($helper->{base}, 'lib');
 
-    eval { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
+    try { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
     die "Cannot load DBIx::Class::Schema::Loader: $@" if $@;
 
     DBIx::Class::Schema::Loader->import(
