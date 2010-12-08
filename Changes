@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - fix loader version check
+
 0.46  Wed Dec  8 13:35:28 UTC 2010
         - make use_moose detection more robust
 
