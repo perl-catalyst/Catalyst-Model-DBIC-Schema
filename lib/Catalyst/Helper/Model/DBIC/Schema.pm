@@ -443,7 +443,7 @@ sub _build_result_namespace {
 
         return 'Result' if $@;
 
-        return try { DBIx::Class::Schema::Loader->VERSION('0.05') } ? 'Result' : '';
+        return (try { DBIx::Class::Schema::Loader->VERSION('0.05') }) ? 'Result' : '';
     }
 
     open my $fh, '<', $schema_pm or die "Could not open $schema_pm: $!";
