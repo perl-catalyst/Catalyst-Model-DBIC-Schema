@@ -416,6 +416,8 @@ sub _build_is_moose_schema {
 
     try {
         finddepth(sub {
+            return if $File::Find::name !~ /\.pm\z/;
+
             open my $fh, '<', $File::Find::name
                 or die "Could not open $File::Find::name: $!";
 

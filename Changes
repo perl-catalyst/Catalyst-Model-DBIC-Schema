@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - fix bug where non-result files were picked up for Moose check
+
 0.44  Tue Dec  7 03:50:48 UTC 2010
         - do not upgrade non-Moose schemas to use_moose=1 (RT#60558)
         - added col_collision_map => 'column_%s' as default loader option
