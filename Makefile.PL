@@ -8,9 +8,9 @@ requires 'DBIx::Class'           => '0.08114';
 requires 'Catalyst::Runtime'     => '5.80005';
 requires 'CatalystX::Component::Traits' => '0.14';
 
-requires 'Moose' => '0.90';
+requires 'Moose' => '1.12';
 requires 'MooseX::Types';
-requires 'namespace::autoclean';
+requires 'namespace::autoclean' => 0.09;
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
 requires 'Tie::IxHash';
@@ -23,7 +23,7 @@ feature 'Catalyst::Helper support',
     -default                      => 0,
     'Catalyst::Devel'             => '1.0',
     'DBIx::Class::Schema::Loader' => '0.04005',
-    'MooseX::NonMoose'            => 0,
+    'MooseX::NonMoose'            => 0.15,
 ;
 
 feature 'Caching support',
