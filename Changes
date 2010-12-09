@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - fix usage of Try::Tiny in helper
+
 0.47  Wed Dec  8 22:21:06 UTC 2010
         - fix loader version check
 

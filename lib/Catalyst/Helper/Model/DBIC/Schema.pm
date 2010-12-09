@@ -439,7 +439,7 @@ sub _build_result_namespace {
         File::Spec->catfile($self->helper->{base}, 'lib', @schema_parts) . '.pm';
 
     if (not -f $schema_pm) {
-        try { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
+        eval { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
 
         return 'Result' if $@;
 
@@ -588,8 +588,12 @@ sub _gen_static_schema {
 
     my $schema_dir = File::Spec->catfile($helper->{base}, 'lib');
 
-    try { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
-    die "Cannot load DBIx::Class::Schema::Loader: $@" if $@;
+    try {
+        Class::MOP::load_class('DBIx::Class::Schema::Loader')
+    }
+    catch {
+        die "Cannot load DBIx::Class::Schema::Loader: $_";
+    };
 
     DBIx::Class::Schema::Loader->import(
         "dump_to_dir:$schema_dir", 'make_schema_at'
