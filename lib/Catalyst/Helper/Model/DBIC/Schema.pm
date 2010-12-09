@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.47';
+our $VERSION = '0.48';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -452,16 +452,11 @@ sub _build_result_namespace {
 
     my ($result_namespace) = $code =~ /result_namespace => '([^']+)'/;
 
-    if (not $result_namespace) {
-        if ($code =~ /->load_classes/) {
-            $result_namespace = '';
-        }
-        else {
-            $result_namespace = 'Result';
-        }
-    }
+    return $result_namespace if $result_namespace;
 
-    return $result_namespace;
+    return '' if $code =~ /->load_classes/;
+
+    return 'Result';
 }
 
 sub _data_struct_to_string {
