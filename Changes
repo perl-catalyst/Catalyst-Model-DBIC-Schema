@@ -1,6 +1,9 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - make sure storage_type class is loaded before ->isa check in
+          Replicated trait (RT#65791)
         - fix regex stringification test for perl 5.14 (RT#68098)
+        - update connect_info POD (RT#66010)
 
 0.48  Thu Dec  9 21:08:33 UTC 2010
         - fix usage of Try::Tiny in helper

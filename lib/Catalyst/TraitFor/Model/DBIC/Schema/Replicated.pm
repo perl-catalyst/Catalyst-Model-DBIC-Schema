@@ -88,6 +88,8 @@ after setup => sub {
             "DBIx::Class::Storage$storage_type"
             : $storage_type;
 
+        Class::MOP::load_class($class);
+
         croak "This storage_type cannot be used with replication"
             unless $class->isa('DBIx::Class::Storage::DBI::Replicated');
     } else {

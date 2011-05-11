@@ -33,7 +33,7 @@ A typical usage of the helper script would be:
 
     script/myapp_create.pl model FilmDB DBIC::Schema MyApp::Schema::FilmDB \
         create=static dbi:mysql:filmdb dbusername dbpass \
-        quote_char='`' name_sep='.'
+        quote_names=1
 
 If you are unfamiliar with L<DBIx::Class>, see L<DBIx::Class::Manual::Intro>
 first.
@@ -169,13 +169,12 @@ C<Catalyst::Model::> namespace.  This parameter is required.
 
 =head2 connect_info
 
-This is an arrayref of connection parameters, which are specific to your
-C<storage_type> (see your storage type documentation for more details). 
-If you only need one parameter (e.g. the DSN), you can just pass a string 
-instead of an arrayref.
+This is a hashref or arrayref of connection parameters, which are specific to
+your C<storage_type> (see your storage type documentation for more details). If
+you only need one parameter (e.g. the DSN), you can just pass a string.
 
 This is not required if C<schema_class> already has connection information
-defined inside itself (which isn't highly recommended, but can be done)
+defined inside itself (which isn't highly recommended, but can be done.)
 
 For L<DBIx::Class::Storage::DBI>, which is the only supported
 C<storage_type> in L<DBIx::Class> at the time of this writing, the
@@ -220,7 +219,7 @@ Or using L<Config::General>:
             user   postgres
             password ""
             auto_savepoint 1
-	    quote_char """
+            quote_names 1
             on_connect_do   some SQL statement
             on_connect_do   another SQL statement
         </connect_info>
@@ -246,7 +245,7 @@ Or using L<YAML>:
           LongReadLen: 1000000
           LongTruncOk: 1
           on_connect_call: 'datetime_setup'
-	  quote_char: '"'
+          quote_names: 1
 
 The old arrayref style with hashrefs for L<DBI> then L<DBIx::Class> options is also
 supported:
