@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.48';
+our $VERSION = '0.49';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -88,11 +88,7 @@ user and pass can be omitted for sqlite, since they are always empty
   script/myapp_create.pl model CatalystModelName DBIC::Schema \
     MyApp::SchemaClass create=static dbi:SQLite:foo.db \
     AutoCommit=1 cursor_class=DBIx::Class::Cursor::Cached \
-    on_connect_do='["select 1", "select 2"]' quote_char='"'
-
-If using a 2 character quote_char:
-
-  script/myapp_create.pl ... quote_char='[]'
+    on_connect_do='["select 1", "select 2"]' quote_names=1
 
 B<ON WINDOWS COMMAND LINES QUOTING RULES ARE DIFFERENT>
 
@@ -101,7 +97,7 @@ In C<cmd.exe> the above example would be:
   script/myapp_create.pl model CatalystModelName DBIC::Schema \
     MyApp::SchemaClass create=static dbi:SQLite:foo.db \
     AutoCommit=1 cursor_class=DBIx::Class::Cursor::Cached \
-    on_connect_do="[\"select 1\", \"select 2\"]" quote_char="\""
+    on_connect_do="[\"select 1\", \"select 2\"]" quote_names=1
 
 Same, but with extra Schema::Loader args (separate multiple values by commas):
 

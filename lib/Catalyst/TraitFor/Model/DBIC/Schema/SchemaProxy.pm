@@ -165,19 +165,10 @@ sub _pass_options_to_schema {
 sub _pass_options_to_resultset {
     my ($self, $source, $args) = @_;
 
-    my @attributes = map {
-        $_->init_arg || ()
-    } $self->meta->get_all_attributes;
-
-    my %attributes;
-    @attributes{@attributes} = ();
-
     for my $opt (keys %$args) {
-        if (not exists $attributes{$opt}) {
-            my $rs_class = $self->schema->source($source)->resultset_class;
-            next unless $rs_class->can($opt);
-            $rs_class->$opt($args->{$opt});
-        }
+        my $rs_class = $self->schema->source($source)->resultset_class;
+        next unless $rs_class->can($opt);
+        $rs_class->$opt($args->{$opt});
     }
 }
 

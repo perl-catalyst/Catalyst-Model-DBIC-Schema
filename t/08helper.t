@@ -73,11 +73,12 @@ $i = instance(args => [$static, q{components=TimeStamp,Foo}]);
 is_deeply $i->components, ['InflateColumn::DateTime', 'TimeStamp', 'Foo'],
     'two extra components';
 
+my $flags = qr// =~ /\^/ ? '^' : "-xism";
 $i = instance(args => [$static, q{constraint=^(foo|bar)$}]);
 is $i->loader_args->{constraint}, qr/^(foo|bar)$/,
     'constraint loader arg';
 is $i->helper->{loader_args}{constraint},
-    q{qr/(?-xism:^(foo|bar)$)/},
+    qq{qr/(?$flags:^(foo|bar)\$)/},
     'constraint loader arg as string';
 
 $i = instance(args => [$static, q{exclude=^(foo|bar)$}]);
