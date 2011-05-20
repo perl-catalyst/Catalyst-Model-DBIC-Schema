@@ -43,7 +43,8 @@ realclean_files 'README';
 
 auto_provides;
 auto_install;
+
 resources repository =>
-    'http://dev.catalyst.perl.org/repos/Catalyst/Catalyst-Model-DBIC-Schema/';
+    'git://git.shadowcat.co.uk/catagits/Catalyst-Model-DBIC-Schema.git';
 
 WriteAll;
