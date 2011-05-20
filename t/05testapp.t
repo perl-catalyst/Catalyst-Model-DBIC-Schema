@@ -30,7 +30,7 @@ my $db         = catdir ($cat_dir, 'testdb.db');
 
 my $catalyst_pl;
 
-foreach my $bin (split /[$Config{path_sep}:]/, $ENV{PATH}) {
+foreach my $bin (split /(?:$Config{path_sep}|:)/, $ENV{PATH}) {
    my $file = catfile($bin, 'catalyst.pl');
    if (-f $file) {
       $catalyst_pl = $file;
