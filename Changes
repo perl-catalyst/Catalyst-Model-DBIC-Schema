@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.50  Fri May 20 14:52:30 UTC 2011
+        - change repository link to the new git repo
+
 0.49  Wed May 11 06:03:50 UTC 2011
         - make sure storage_type class is loaded before ->isa check in
           Replicated trait (RT#65791)
