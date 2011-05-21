@@ -1,4 +1,4 @@
-package AnotherSchemaClass::ResultSet::Users;
+package AnotherSchemaClass::ResultSet::User;
 
 use strict;
 use warnings;

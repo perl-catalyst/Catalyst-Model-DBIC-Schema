@@ -4,6 +4,7 @@ use FindBin;
 use File::Spec::Functions qw/catfile catdir/;
 use File::Find;
 use Config;
+use DBI;
 
 plan skip_all => 'Enable this optional test with $ENV{C_M_DBIC_SCHEMA_TESTAPP}'
     unless $ENV{C_M_DBIC_SCHEMA_TESTAPP};
@@ -26,7 +27,7 @@ my $catlib_dir = catdir ($cat_dir, 'lib');
 my $schema_dir = catdir ($catlib_dir, 'TestSchemaDSN');
 my $creator    = catfile($cat_dir, 'script', 'testapp_create.pl');
 my $model_dir  = catdir ($catlib_dir, 'TestApp', 'Model');
-my $db         = catdir ($cat_dir, 'testdb.db');
+my $db         = catfile($cat_dir, 'testdb.db');
 
 my $catalyst_pl;
 
@@ -45,8 +46,10 @@ system("$^X $catalyst_pl TestApp");
 chdir($cat_dir);
 
 # create test db
-open my $sql, '|-', "sqlite3 $db" or die $!;
-print $sql <<'EOF';
+my $dbh = DBI->connect("dbi:SQLite:$db", '', '', {
+   RaiseError => 1, PrintError => 0
+});
+$dbh->do(<<'EOF');
 CREATE TABLE users (                       
         id            INTEGER PRIMARY KEY, 
         username      TEXT,                
@@ -56,12 +59,14 @@ CREATE TABLE users (
         last_name     TEXT,                
         active        INTEGER              
 );
+EOF
+$dbh->do(<<'EOF');
 CREATE TABLE roles (
         id   INTEGER PRIMARY KEY,
         role TEXT
 );
 EOF
-close $sql;
+$dbh->disconnect;
 
 foreach my $tparam (@$test_params) {
    my ($model, $helper, @args) = @$tparam;

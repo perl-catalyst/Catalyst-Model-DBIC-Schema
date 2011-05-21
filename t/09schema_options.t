@@ -23,7 +23,7 @@ is $m->schema->a_schema_option, 'pass the crack pipe', 'delegation works';
 
 ok(($m = instance(schema_class => 'AnotherSchemaClass')), 'instance');
 
-is $m->resultset('Users')->rs_config_option, 'configured rs value',
+is $m->resultset('User')->rs_config_option, 'configured rs value',
     'ResultSet option passed from config';
 
 done_testing;
@@ -41,7 +41,7 @@ BEGIN {
     package MyApp;
     use Catalyst;
     __PACKAGE__->config({
-        'Model::DB::Users' => {
+        'Model::DB::User' => {
             rs_config_option => 'configured rs value',
         },
     });
