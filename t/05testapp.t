@@ -5,11 +5,10 @@ use File::Spec::Functions qw/catfile catdir/;
 use File::Find;
 use Config;
 use DBI;
+use IPC::Open3 'open3';
 
 plan skip_all => 'Enable this optional test with $ENV{C_M_DBIC_SCHEMA_TESTAPP}'
     unless $ENV{C_M_DBIC_SCHEMA_TESTAPP};
-
-# XXX this test needs a re-write to fully test the current set of capabilities...
 
 my $test_params = [
     [ 'TestSchema', 'DBIC::Schema', '' ],
@@ -42,7 +41,7 @@ foreach my $bin (split /(?:$Config{path_sep}|:)/, $ENV{PATH}) {
 plan skip_all => 'catalyst.pl not found' unless $catalyst_pl;
 
 chdir($test_dir);
-system("$^X $catalyst_pl TestApp");
+silent_exec("$^X $catalyst_pl TestApp");
 chdir($cat_dir);
 
 # create test db
@@ -51,13 +50,13 @@ my $dbh = DBI->connect("dbi:SQLite:$db", '', '', {
 });
 $dbh->do(<<'EOF');
 CREATE TABLE users (                       
-        id            INTEGER PRIMARY KEY, 
-        username      TEXT,                
-        password      TEXT,                
-        email_address TEXT,                
-        first_name    TEXT,                
-        last_name     TEXT,                
-        active        INTEGER              
+        id            INTEGER PRIMARY KEY,
+        username      TEXT,
+        password      TEXT,
+        email_address TEXT,
+        first_name    TEXT,
+        last_name     TEXT,
+        active        INTEGER
 );
 EOF
 $dbh->do(<<'EOF');
@@ -73,11 +72,11 @@ foreach my $tparam (@$test_params) {
 
    cleanup_schema();
 
-   system($^X, "-I$blib_dir", $creator, 'model', $model, $helper, $model, @args);
+   silent_exec($^X, "-I$blib_dir", $creator, 'model', $model, $helper, $model, @args);
 
    my $model_path = catfile($model_dir, $model . '.pm');
    ok( -f $model_path, "$model_path is a file" );
-   my $compile_rv = system("$^X -I$blib_dir -I$catlib_dir -c $model_path");
+   my $compile_rv = silent_exec($^X, "-I$blib_dir", "-I$catlib_dir", "-c", $model_path);
    ok($compile_rv == 0, "perl -c $model_path");
 
    if (grep /create=static/, @args) {
@@ -102,7 +101,7 @@ foreach my $tparam (@$test_params) {
 {
    cleanup_schema();
 
-   system($^X, "-I$blib_dir", $creator, 'model',
+   silent_exec($^X, "-I$blib_dir", $creator, 'model',
       'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
       'create=static', 'use_moose=0', 'dbi:SQLite:testdb.db'
    );
@@ -116,7 +115,7 @@ foreach my $tparam (@$test_params) {
       unlike $code, qr/__PACKAGE__->meta->make_immutable;\n/, 'non use_moose=1 schema';
    }
 
-   system($^X, "-I$blib_dir", $creator, 'model',
+   silent_exec($^X, "-I$blib_dir", $creator, 'model',
       'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
       'create=static', 'dbi:SQLite:testdb.db'
    );
@@ -136,7 +135,7 @@ foreach my $tparam (@$test_params) {
 {
    cleanup_schema();
 
-   system($^X, "-I$blib_dir", $creator, 'model',
+   silent_exec($^X, "-I$blib_dir", $creator, 'model',
       'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
       'create=static', 'dbi:SQLite:testdb.db'
    );
@@ -153,7 +152,7 @@ foreach my $tparam (@$test_params) {
    print $fh "hlagh\n";
    close $fh;
 
-   system($^X, "-I$blib_dir", $creator, 'model',
+   silent_exec($^X, "-I$blib_dir", $creator, 'model',
       'TestSchemaDSN', 'DBIC::Schema', 'TestSchemaDSN',
       'create=static', 'dbi:SQLite:testdb.db'
    );
@@ -178,7 +177,7 @@ sub rm_rf {
 
 sub cleanup_schema {
    return unless -d $schema_dir;
-   finddepth(\&rm_rf, $schema_dir);
+   finddepth({ wanted => \&rm_rf, no_chdir => 1 }, $schema_dir);
    unlink "${schema_dir}.pm";
 }
 
@@ -211,10 +210,21 @@ sub result_files {
    return @results;
 }
 
+sub silent_exec {
+   local *NULL;
+   open NULL, '+<', File::Spec->devnull;
+
+   my $pid = open3('<&NULL', '>&NULL', '>&NULL', @_);
+
+   waitpid $pid, 0;
+
+   return $?;
+}
+
 END {
     if ($ENV{C_M_DBIC_SCHEMA_TESTAPP}) {
         chdir($test_dir);
-        finddepth(\&rm_rf, $cat_dir);
+        finddepth({ wanted => \&rm_rf, no_chdir => 1 }, $cat_dir);
     }
 }
 
