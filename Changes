@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - warn when helper finds no tables
+
 0.50  Fri May 20 22:45:07 UTC 2011
         - change repository link to the new git repo
         - get t/05testapp.t to run on Win32
