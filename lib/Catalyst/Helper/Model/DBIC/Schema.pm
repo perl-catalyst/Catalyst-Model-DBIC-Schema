@@ -61,14 +61,15 @@ the generated classes by hand to refine them.
 C<traits> is the list of traits to apply to the model, see
 L<Catalyst::Model::DBIC::Schema> for details.
 
-C<Schema::Loader opts> are described in L</TYPICAL EXAMPLES> below.
+C<Schema::Loader opts> are documented in L<DBIx::Class::Schema::Loader::Base>
+and some examples are given in L</TYPICAL EXAMPLES> below.
 
-C<connect_info> arguments are the same as what
-DBIx::Class::Schema::connect expects, and are storage_type-specific.
-For DBI-based storage, these arguments are the dsn, username,
-password, and connect options, respectively.  These are optional for
-existing Schemas, but required if you use either of the C<create=>
-options.
+C<connect_info> arguments are the same as what L<DBIx::Class::Schema/connect>
+expects, and are storage_type-specific. They are documented in
+L<DBIx::Class::Storage::DBI/connect_info>. For DBI-based storage, these
+arguments are the dsn, username, password, and connect options, respectively.
+These are optional for existing Schemas, but required if you use either of the
+C<create=> options.
 
 username and password can be omitted for C<SQLite> dsns.
 
