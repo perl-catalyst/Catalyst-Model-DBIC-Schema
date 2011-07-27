@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.50';
+our $VERSION = '0.51';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -290,6 +290,29 @@ sub _read_loader_args {
 
     while (@$args && $args->[0] !~ /^dbi:/i) {
         my ($key, $val) = split /=/, shift(@$args), 2;
+
+        if ($self->_is_struct($val)) {
+            $loader_args{$key} = $val;
+        } elsif ((my @vals = split /,/ => $val) > 1) {
+            $loader_args{$key} = \@vals;
+        } else {
+            $loader_args{$key} = $val;
+        }
+    }
+
+    # Use args after connect_info as loader args as well, because people always
+    # get the order confused.
+    my $i = 1;
+    if ($args->[0] =~ /sqlite/i) {
+        $i++ if $args->[$i] eq '';
+        $i++ if $args->[$i] eq '';
+    }
+    else {
+        $i += 2;
+    }
+
+    while (defined $args->[$i]) {
+        my ($key, $val) = split /=/, $args->[$i++], 2;
 
         if ($self->_is_struct($val)) {
             $loader_args{$key} = $val;

@@ -166,6 +166,15 @@ is $i->helper->{connect_info}{auto_savepoint}, 'q{1}',
 is $i->helper->{connect_info}{AutoCommit}, 'q{0}',
     'connect_info arg from extra hash as string';
 
+$i = instance(args => [
+    $static, 'components=TimeStamp', $sqlite, $on_connect_do,
+    $quote_char, $name_sep, 'auto_savepoint=1', 'AutoCommit=0',
+    'db_schema=myschema',
+]);
+
+is $i->loader_args->{db_schema}, 'myschema',
+    'loader arg after connect_info';
+
 done_testing;
 
 sub instance {

@@ -1,6 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.51  Wed Jul 27 20:57:47 UTC 2011
         - warn when helper finds no tables
+        - accept loader args after connect_info
 
 0.50  Fri May 20 22:45:07 UTC 2011
         - change repository link to the new git repo
