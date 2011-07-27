@@ -596,6 +596,19 @@ sub _gen_static_schema {
         $self->loader_args,
         [$self->connect_info]
     );
+
+    require lib;
+    lib->import($schema_dir);
+
+    Class::MOP::load_class($self->schema_class);
+
+    my @sources = $self->schema_class->sources;
+
+    if (not @sources) {
+        warn <<'EOF';
+WARNING: No tables found, did you forget to specify db_schema?
+EOF
+    }
 }
 
 sub _gen_model {
