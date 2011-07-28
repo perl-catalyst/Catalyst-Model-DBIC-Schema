@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.52  Thu Jul 28 22:07:38 UTC 2011
+        - fix a bug in loader args reading after connect_info (skip structs)
+
 0.51  Wed Jul 27 20:57:47 UTC 2011
         - warn when helper finds no tables
         - accept loader args after connect_info

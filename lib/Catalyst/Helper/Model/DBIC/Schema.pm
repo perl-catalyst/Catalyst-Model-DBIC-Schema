@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.51';
+our $VERSION = '0.52';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -312,6 +312,10 @@ sub _read_loader_args {
     }
 
     while (defined $args->[$i]) {
+        $i++ while $self->_is_struct($args->[$i]);
+
+        last if not defined $args->[$i];
+
         my ($key, $val) = split /=/, $args->[$i++], 2;
 
         if ($self->_is_struct($val)) {
