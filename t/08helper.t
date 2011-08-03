@@ -175,6 +175,9 @@ $i = instance(args => [
 is $i->loader_args->{db_schema}, 'myschema',
     'loader arg after connect_info';
 
+ok ((not exists $i->helper->{connect_info}{db_schema}),
+    'loader args removed from connect_info');
+
 done_testing;
 
 sub instance {

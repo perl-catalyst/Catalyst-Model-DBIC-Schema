@@ -311,19 +311,33 @@ sub _read_loader_args {
         $i += 2;
     }
 
-    while (defined $args->[$i]) {
-        $i++ while $self->_is_struct($args->[$i]);
+    my $have_loader = try {
+        Class::MOP::load_class('DBIx::Class::Schema::Loader::Base');
+        1;
+    };
 
-        last if not defined $args->[$i];
+    if ($have_loader) {
+        while (defined $args->[$i]) {
+            $i++ while $self->_is_struct($args->[$i]);
 
-        my ($key, $val) = split /=/, $args->[$i++], 2;
+            last if not defined $args->[$i];
 
-        if ($self->_is_struct($val)) {
-            $loader_args{$key} = $val;
-        } elsif ((my @vals = split /,/ => $val) > 1) {
-            $loader_args{$key} = \@vals;
-        } else {
-            $loader_args{$key} = $val;
+            my ($key, $val) = split /=/, $args->[$i], 2;
+
+            if (not DBIx::Class::Schema::Loader::Base->can($key)) {
+                $i++;
+                next;
+            }
+
+            if ($self->_is_struct($val)) {
+                $loader_args{$key} = $val;
+            } elsif ((my @vals = split /,/ => $val) > 1) {
+                $loader_args{$key} = \@vals;
+            } else {
+                $loader_args{$key} = $val;
+            }
+
+            splice @$args, $i, 1;
         }
     }
 
