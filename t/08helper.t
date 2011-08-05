@@ -8,8 +8,7 @@ use Test::More;
 use Test::Exception;
 use Catalyst::Helper::Model::DBIC::Schema;
 use Storable 'dclone';
-eval "use Catalyst::Helper";
-plan skip_all => 'Catalyst::Helper required for tests' if $@;
+use Test::Requires qw(Catalyst::Helper DBIx::Class::Schema::Loader);
 
 my $helper      = Catalyst::Helper->new;
 $helper->{base} = $Bin;

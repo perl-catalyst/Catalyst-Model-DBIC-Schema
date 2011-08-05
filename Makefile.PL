@@ -18,6 +18,8 @@ requires 'Try::Tiny';
 
 test_requires 'Test::More' => '0.94';
 test_requires 'Test::Exception';
+test_requires 'Storable';
+test_requires 'Test::Requires';
 
 feature 'Catalyst::Helper support',
     -default                      => 0,

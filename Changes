@@ -1,5 +1,9 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.54  Fri Aug  5 11:29:00 EDT 2011
+        - Changed t/08helper.t to skip if required features are not installed.
+        - tweaked the Makefile.PL to support these changes
+
 0.53  Wed Aug  3 03:45:07 UTC 2011
         - check loader args after connect_info against loader methods and remove
           them from connect_info
