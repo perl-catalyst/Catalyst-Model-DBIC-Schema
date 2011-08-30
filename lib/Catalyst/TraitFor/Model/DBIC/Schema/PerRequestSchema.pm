@@ -1,13 +1,8 @@
 package Catalyst::TraitFor::Model::DBIC::Schema::PerRequestSchema;
-use Moose;
+use Moose::Role;
 use namespace::autoclean;
 
-sub BUILD {}
-after BUILD => sub {
-    my ($self) = @_;
-    confess("You have not implemented a per_request_schema_attributes method in " . ref($self))
-        unless $self->can('per_request_schema_attributes');
-};
+requires 'per_request_schema_attributes';
 
 with 'Catalyst::Component::InstancePerContext';
 
