@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - add DBD::SQLite to test_requires (RT#70357)
+
 0.54  Fri Aug  5 11:29:00 EDT 2011
         - Changed t/08helper.t to skip if required features are not installed.
         - tweaked the Makefile.PL to support these changes
