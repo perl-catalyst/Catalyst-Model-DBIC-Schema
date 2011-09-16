@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Moose;
 no warnings 'uninitialized';
 
-our $VERSION = '0.54';
+our $VERSION = '0.55';
 $VERSION = eval $VERSION;
 
 use Carp;

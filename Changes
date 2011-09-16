@@ -1,5 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.55  Fri Sep 16 08:55:53 UTC 2011
         - add DBD::SQLite to test_requires (RT#70357)
 
 0.54  Fri Aug  5 11:29:00 EDT 2011
