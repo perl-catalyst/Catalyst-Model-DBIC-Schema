@@ -1,5 +1,7 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+        - add POD for PerRequestSchema trait
+
 0.56  2011-10-22 15:34:59
         - add PerRequestSchema trait (t0m)
 
