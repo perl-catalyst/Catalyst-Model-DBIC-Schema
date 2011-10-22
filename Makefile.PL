@@ -15,6 +15,7 @@ requires 'Carp::Clan';
 requires 'List::MoreUtils';
 requires 'Tie::IxHash';
 requires 'Try::Tiny';
+requires 'Catalyst::Component::InstancePerContext';
 
 test_requires 'Test::More' => '0.94';
 test_requires 'Test::Exception';

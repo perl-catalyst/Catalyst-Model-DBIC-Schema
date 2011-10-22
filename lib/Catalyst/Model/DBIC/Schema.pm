@@ -300,6 +300,8 @@ Traits that come with the distribution:
 
 =item L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy>
 
+=item L<Catalyst::TraitFor::Model::DBIC::Schema::PerRequestSchema>
+
 =back
 
 =head2 storage_type
@@ -651,6 +653,7 @@ Traits:
 L<Catalyst::TraitFor::Model::DBIC::Schema::Caching>,
 L<Catalyst::TraitFor::Model::DBIC::Schema::Replicated>,
 L<Catalyst::TraitFor::Model::DBIC::Schema::SchemaProxy>,
+L<Catalyst::TraitFor::Model::DBIC::Schema::PerRequestSchema>,
 L<Catalyst::TraitFor::Model::DBIC::Schema::QueryLog>
 
 =head1 AUTHOR
@@ -672,6 +675,8 @@ osfameron: C<osfameron@cpan.org>
 ozum: Ozum Eldogan C<ozum@ozum.net>
 
 Pavel I. Shaydo C<zwon@trinitum.org>
+
+t0m: Tomas Doran <bobtfish@bobtfish.net>
 
 =head1 COPYRIGHT
 
