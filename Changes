@@ -1,5 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.58  2011-10-25 19:19:43
         - remove ->make_immutable from the PerRequestSchema trait
 
 0.57  2011-10-22 16:01:45
