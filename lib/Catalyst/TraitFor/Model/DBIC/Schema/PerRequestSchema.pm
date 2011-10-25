@@ -36,12 +36,10 @@ sub build_per_context_instance {
 
     my $new = bless {%$self}, ref $self;
 
-    $new->schema( $new->schema->clone($self->per_request_schema_attributes($ctx)) );
+    $new->schema($new->schema->clone($self->per_request_schema_attributes($ctx)));
 
     return $new;
 }
-
-__PACKAGE__->meta->make_immutable;
 
 =head1 SEE ALSO
 
