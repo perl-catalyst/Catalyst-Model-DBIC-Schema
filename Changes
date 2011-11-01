@@ -1,5 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.59  2011-11-01 11:20:46
         - update helper deps for new loader
 
 0.58  2011-10-25 19:19:43
