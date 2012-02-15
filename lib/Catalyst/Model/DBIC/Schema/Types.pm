@@ -17,8 +17,8 @@ subtype LoadedClass,
     as ClassName;
 
 coerce LoadedClass,
-    from Str,
-    via { Class::MOP::load_class($_); $_ };
+    from Str, # N.B. deliberate paranoia against $_ clobbering below
+    via { my $classname = $_; Class::MOP::load_class($classname); $classname };
 
 subtype SchemaClass,
     as ClassName,
