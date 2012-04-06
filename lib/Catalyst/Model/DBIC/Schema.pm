@@ -676,7 +676,7 @@ ozum: Ozum Eldogan C<ozum@ozum.net>
 
 Pavel I. Shaydo C<zwon@trinitum.org>
 
-t0m: Tomas Doran <bobtfish@bobtfish.net>
+SineSwiper: Brendan Byrd <byrd.b@insightcom.com>
 
 =head1 COPYRIGHT
 

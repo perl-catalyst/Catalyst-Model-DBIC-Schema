@@ -1,9 +1,7 @@
 package Catalyst::TraitFor::Model::DBIC::Schema::PerRequestSchema;
 
 use Moose::Role;
-use namespace::autoclean;
-
-requires 'per_request_schema_attributes';
+use MooseX::MarkAsMethods autoclean => 1;
 
 with 'Catalyst::Component::InstancePerContext';
 
@@ -18,15 +16,26 @@ with attributes for each requests
         traits => ['PerRequestSchema'],
     });
 
-    method per_request_schema_attributes($c) {
+    sub per_request_schema_attributes {
+        my ($self, $c) = @_;
         return (restricting_object => $c->user->obj);
     }
+    ### OR ###
+    sub per_request_schema {
+        my ($self, $c) = @_;
+        return $self->schema->schema_method($c->user->obj)
+    }
+    
 
 =head1 DESCRIPTION
 
 Clones the schema for each new request with the attributes retrieved from your
 C<per_request_schema_attributes> method, which you must implement. This method
 is passed the context.
+
+Alternatively, you could also override the C<per_request_schema> method if you
+need access to the schema clone and/or need to separate out the Model/Schema
+methods.  (See examples above and the defaults in the code.)
 
 =cut
 
@@ -36,10 +45,22 @@ sub build_per_context_instance {
 
     my $new = bless {%$self}, ref $self;
 
-    $new->schema($new->schema->clone($self->per_request_schema_attributes($ctx)));
+    $new->schema($new->per_request_schema($ctx));
 
     return $new;
 }
+
+# Thanks to Matt Trout for this idea
+sub per_request_schema {
+    my ($self, $c) = @_;
+    return $self->schema->clone($self->per_request_schema_attributes($c));
+}
+
+### TODO: This should probably be more elegant ###
+sub per_request_schema_attributes {
+   confess "Either per_request_schema_attributes needs to be created, or per_request_schema needs to be overridden!";
+}
+
 
 =head1 SEE ALSO
 
