@@ -1,5 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.60  2012-06-12 16:27:00
         - Add per_request_schema hook to PerRequestSchema trait and docs
         - Additional paranoia in types as it's possible for loading code
           to clobber $_
