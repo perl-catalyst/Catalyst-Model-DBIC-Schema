@@ -72,7 +72,15 @@ Or, if you prefer L<Moose>:
     use MooseX::ClassAttribute;
     extends 'DBIx::Class::ResultSet';
 
+    sub BUILDARGS { $_[2] } # important
+
     class_has rs_config_key1 => (is => 'rw', default => 'default_value');
+
+    ...
+
+    __PACKAGE__->meta->make_immutable;
+
+    1;
 
 In your catalyst config, use the generated Model name as the config key, e.g.:
 
