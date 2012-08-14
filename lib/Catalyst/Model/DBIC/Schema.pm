@@ -16,7 +16,7 @@ use DBIx::Class ();
 use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo LoadedClass SchemaClass Schema/;
 
-use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef/;
+use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef Bool/;
 
 =head1 NAME
 
@@ -311,6 +311,11 @@ C<schema_class> (which in turn defaults to C<::DBI> if not set in current
 L<DBIx::Class>).  Completely optional, and probably unnecessary for most
 people until other storage backends become available for L<DBIx::Class>.
 
+=head2 install_resultset_models
+
+Whether or not shortcut thin models are created for each resultset class.
+Defaults to true.
+
 =head1 ATTRIBUTES
 
 The keys you pass in the model configuration are available as attributes.
@@ -425,6 +430,8 @@ has storage_type => (is => 'rw', isa => Str);
 
 has connect_info => (is => 'rw', isa => ConnectInfo, coerce => 1);
 
+has install_resultset_models => (is => 'rw', isa => Bool, default => 1);
+
 has model_name => (
     is => 'ro',
     isa => Str,
@@ -476,8 +483,14 @@ sub BUILD {
 
     my $is_installed = defined $self->composed_schema;
 
-    $self->composed_schema($schema_class->compose_namespace($class))
-        unless $is_installed;
+    unless ($is_installed){
+        if ($self->install_resultset_models){
+            $self->composed_schema($schema_class->compose_namespace($class))
+        }
+        else {
+            $self->composed_schema($schema_class);
+        }
+    }
 
     $self->schema($self->composed_schema->clone)
         unless $self->schema;
@@ -487,7 +500,9 @@ sub BUILD {
 
     $self->schema->connection($self->connect_info);
 
-    $self->_install_rs_models unless $is_installed;
+    if (!$is_installed && $self->install_resultset_models){
+        $self->_install_rs_models;
+        }
 }
 
 sub clone { shift->composed_schema->clone(@_); }
