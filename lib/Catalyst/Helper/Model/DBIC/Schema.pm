@@ -502,6 +502,7 @@ sub _data_struct_to_string {
 
     local $Data::Dumper::Terse = 1;
     local $Data::Dumper::Quotekeys = 0;
+    local $Data::Dumper::Sortkeys = 1;
     local $Data::Dumper::Indent = 0;
     local $Data::Dumper::Useqq = 1;
 
