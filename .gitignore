@@ -5,4 +5,9 @@ Makefile
 README
 blib/
 inc/
-
+MANIFEST
+pm_to_blib
+Catalyst-Model-DBIC-Schema-*
+*~
+.#*
+*#
