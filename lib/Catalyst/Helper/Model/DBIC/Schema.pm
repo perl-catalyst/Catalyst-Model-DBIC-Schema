@@ -674,7 +674,7 @@ EOF
 sub _cleanup_args {
     my ($self, $args) = @_;
 
-# remove blanks, ie. someoned doing foo \  bar
+# remove blanks, ie. someone doing foo \  bar
     my @res = grep !/^\s+\z/, @$args;
 
 # remove leading whitespace, ie. foo \ bar
