@@ -12,7 +12,7 @@ use MooseX::Types::Moose qw/Str HashRef/;
 Catalyst::TraitFor::Model::DBIC::Schema::Replicated - Replicated storage support for
 L<Catalyst::Model::DBIC::Schema>
 
-=head1 SYNOPSiS
+=head1 SYNOPSIS
 
     __PACKAGE__->config({
         traits => ['Replicated']
