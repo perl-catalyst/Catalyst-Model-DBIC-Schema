@@ -156,7 +156,7 @@ L<DBIx::Class::Schema/load_namespaces>, the default for helper script generated
 schemas.
 
 See L<DBIx::Class::Manual::Cookbook/"Predefined searches"> 
-for information on definining your own L<DBIx::Class::ResultSet> classes for
+for information on defining your own L<DBIx::Class::ResultSet> classes for
 use with L<DBIx::Class::Schema/load_classes>, the old default.
 
 =head1 CONFIG PARAMETERS
@@ -507,7 +507,7 @@ sub storage { shift->schema->storage(@_); }
 =head2 setup
 
 Called at C<BUILD> time before configuration, but after L</connect_info> is
-set. To do something after configuuration use C<< after BUILD => >>.
+set. To do something after configuration use C<< after BUILD => >>.
 
 Receives a hashref of args passed to C<BUILD>.
 
