@@ -4,6 +4,7 @@ use namespace::autoclean;
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use MooseX::Types::Moose 'Int';
+use Module::Runtime 'use_module';
 
 =head1 NAME
 
@@ -63,7 +64,7 @@ after setup => sub {
     my $cursor_class = $self->connect_info->{cursor_class}
         || 'DBIx::Class::Cursor::Cached';
 
-    unless (eval { Class::MOP::load_class($cursor_class) }) {
+    unless (eval { use_module($cursor_class) }) {
         carp "Caching disabled, cannot load cursor class"
             . " $cursor_class: $@";
         return;

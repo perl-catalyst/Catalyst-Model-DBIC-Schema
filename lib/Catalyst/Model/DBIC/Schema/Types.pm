@@ -2,29 +2,21 @@ package  # hide from PAUSE
     Catalyst::Model::DBIC::Schema::Types;
 
 use MooseX::Types -declare => [qw/
-    ConnectInfo ConnectInfos Replicants SchemaClass LoadedClass CreateOption
+    ConnectInfo ConnectInfos Replicants SchemaClass CreateOption
     Schema
 /];
 
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use MooseX::Types::Moose qw/ArrayRef HashRef CodeRef Str ClassName/;
+use MooseX::Types::LoadableClass qw/LoadableClass/;
 use Scalar::Util 'reftype';
 use List::MoreUtils 'all';
 
 use namespace::clean -except => 'meta';
 
-subtype LoadedClass,
-    as ClassName;
-
-coerce LoadedClass,
-    from Str, # N.B. deliberate paranoia against $_ clobbering below
-    via { my $classname = $_; Class::MOP::load_class($classname); $classname };
-
 subtype SchemaClass,
-    as ClassName,
+    as LoadableClass,
     where { $_->isa('DBIx::Class::Schema') };
-
-SchemaClass->coercion(LoadedClass->coercion);
 
 class_type Schema, { class => 'DBIx::Class::Schema' };
 

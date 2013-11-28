@@ -4,8 +4,10 @@ use namespace::autoclean;
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 
-use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfos LoadedClass/;
+use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfos LoadableClass/;
 use MooseX::Types::Moose qw/Str HashRef/;
+
+use Module::Runtime qw/use_module/;
 
 =head1 NAME
 
@@ -74,7 +76,7 @@ has replicants => (
     is => 'ro', isa => ConnectInfos, coerce => 1, required => 1
 );
 
-has pool_type => (is => 'ro', isa => LoadedClass);
+has pool_type => (is => 'ro', isa => LoadableClass);
 has pool_args => (is => 'ro', isa => HashRef);
 has balancer_type => (is => 'ro', isa => Str);
 has balancer_args => (is => 'ro', isa => HashRef);
@@ -88,7 +90,7 @@ after setup => sub {
             "DBIx::Class::Storage$storage_type"
             : $storage_type;
 
-        Class::MOP::load_class($class);
+        use_module($class);
 
         croak "This storage_type cannot be used with replication"
             unless $class->isa('DBIx::Class::Storage::DBI::Replicated');

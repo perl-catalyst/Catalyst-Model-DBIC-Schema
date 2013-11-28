@@ -18,6 +18,7 @@ use Scalar::Util 'looks_like_number';
 use File::Find 'finddepth';
 use Try::Tiny;
 use Cwd 'getcwd';
+use Module::Runtime 'use_module';
 
 =head1 NAME
 
@@ -312,7 +313,7 @@ sub _read_loader_args {
     }
 
     my $have_loader = try {
-        Class::MOP::load_class('DBIx::Class::Schema::Loader::Base');
+        use_module('DBIx::Class::Schema::Loader::Base');
         1;
     };
 
@@ -477,7 +478,7 @@ sub _build_result_namespace {
         File::Spec->catfile($self->helper->{base}, 'lib', @schema_parts) . '.pm';
 
     if (not -f $schema_pm) {
-        eval { Class::MOP::load_class('DBIx::Class::Schema::Loader') };
+        eval { use_module('DBIx::Class::Schema::Loader') };
 
         return 'Result' if $@;
 
@@ -623,7 +624,7 @@ sub _gen_static_schema {
     my $schema_dir = File::Spec->catfile($helper->{base}, 'lib');
 
     try {
-        Class::MOP::load_class('DBIx::Class::Schema::Loader')
+        use_module('DBIx::Class::Schema::Loader')
     }
     catch {
         die "Cannot load DBIx::Class::Schema::Loader: $_";
@@ -642,7 +643,7 @@ sub _gen_static_schema {
     require lib;
     lib->import($schema_dir);
 
-    Class::MOP::load_class($self->schema_class);
+    use_module($self->schema_class);
 
     my @sources = $self->schema_class->sources;
 

@@ -12,11 +12,13 @@ use namespace::autoclean;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 use Data::Dumper;
 use DBIx::Class ();
+use Module::Runtime qw/use_module/;
 
 use Catalyst::Model::DBIC::Schema::Types
-    qw/ConnectInfo LoadedClass SchemaClass Schema/;
+    qw/ConnectInfo SchemaClass Schema/;
 
-use MooseX::Types::Moose qw/ArrayRef Str ClassName Undef/;
+use MooseX::Types::Moose qw/Str/;
+use MooseX::Types::LoadableClass qw/LoadableClass/;
 
 =head1 NAME
 
@@ -417,7 +419,6 @@ See L<DBIx::Class::Storage> and L<DBIx::Class::Storage::DBI>.
 has schema_class => (
     is => 'ro',
     isa => SchemaClass,
-    coerce => 1,
     required => 1
 );
 
@@ -434,9 +435,8 @@ has model_name => (
 
 has _default_cursor_class => (
     is => 'ro',
-    isa => LoadedClass,
+    isa => LoadableClass,
     default => 'DBIx::Class::Storage::DBI::Cursor',
-    coerce => 1
 );
 
 has schema => (is => 'rw', isa => Schema);
@@ -467,7 +467,7 @@ sub BUILD {
     }
 
     if (exists $self->connect_info->{cursor_class}) {
-        eval { Class::MOP::load_class($self->connect_info->{cursor_class}) }
+        eval { use_module($self->connect_info->{cursor_class}) }
             or croak "invalid connect_info: Cannot load your cursor_class"
         . " ".$self->connect_info->{cursor_class}.": $@";
     }
