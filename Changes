@@ -3,7 +3,7 @@ Revision history for Perl extension Catalyst::Model::DBIC::Schema
         - Don't ship MYMETA.* files (RT#91808)
         - Stop using deprecated Class::MOP::load_module
 
-0.61 2013-06-19 12:48:34
+0.61  2013-06-19 12:48:34
         - Fix test failure caused by hash randomisation in perl 5.17 (RT#82917)
 
 0.60  2012-06-12 16:27:00
