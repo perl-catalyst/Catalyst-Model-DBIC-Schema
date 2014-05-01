@@ -9,6 +9,7 @@ requires 'Catalyst::Runtime'     => '5.80005';
 requires 'CatalystX::Component::Traits' => '0.14';
 
 requires 'Moose' => '1.12';
+requires 'MooseX::MarkAsMethods' => '0.13'
 requires 'MooseX::Types';
 requires 'MooseX::Types::LoadableClass' => 0.009;
 requires 'Module::Runtime' => '0.012';
@@ -18,6 +19,7 @@ requires 'List::MoreUtils';
 requires 'Tie::IxHash';
 requires 'Try::Tiny';
 requires 'Catalyst::Component::InstancePerContext';
+
 
 test_requires 'Test::More' => '0.94';
 test_requires 'Test::Exception';
@@ -30,7 +32,6 @@ feature 'Catalyst::Helper support',
     'Catalyst::Devel'             => '1.0',
     'DBIx::Class::Schema::Loader' => '0.04005',
     'MooseX::NonMoose'            => '0.16',
-    'MooseX::MarkAsMethods'       => '0.13'
 ;
 
 feature 'Caching support',
