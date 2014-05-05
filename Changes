@@ -2,6 +2,7 @@ Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
 0.63
         - Make MooseX::MarkAsMethods a hard prerequisite (RT#94923)
+        - Fix t/08helper.t with Data::Dumper >= 2.151 (RT#94599)
 
 0.62  2014-01-06 12:32:27
         - Don't ship MYMETA.* files (RT#91808)

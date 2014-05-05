@@ -8,6 +8,7 @@ use Test::More;
 use Test::Exception;
 use Catalyst::Helper::Model::DBIC::Schema;
 use Storable 'dclone';
+use Data::Dumper;
 use Test::Requires qw(Catalyst::Helper DBIx::Class::Schema::Loader);
 
 my $helper      = Catalyst::Helper->new;
@@ -72,12 +73,13 @@ $i = instance(args => [$static, q{components=TimeStamp,Foo}]);
 is_deeply $i->components, ['InflateColumn::DateTime', 'TimeStamp', 'Foo'],
     'two extra components';
 
-my $flags = qr// =~ /\^/ ? '^' : "-xism";
+# Different versions of perl and Data::Dumper serialise regexes differently
+my ($flagstart, $flagend, $postflag) = Dumper(qr//) =~ m{qr/(.*?)(\)?)/([a-z]*)};
 $i = instance(args => [$static, q{constraint=^(foo|bar)$}]);
 is $i->loader_args->{constraint}, qr/^(foo|bar)$/,
     'constraint loader arg';
 is $i->helper->{loader_args}{constraint},
-    qq{qr/(?$flags:^(foo|bar)\$)/},
+    qq{qr/$flagstart^(foo|bar)\$$flagend/$postflag},
     'constraint loader arg as string';
 
 $i = instance(args => [$static, q{exclude=^(foo|bar)$}]);
