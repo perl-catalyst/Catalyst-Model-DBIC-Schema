@@ -1,5 +1,9 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.64  2014-07-22 23:0:00
+        - Fix Replicated trait that got busted when someone assumed
+          Module::Runtime was a drop in replacement for Class::MOP::load_class
+
 0.63  2014-05-05 22:56:43
         - Make MooseX::MarkAsMethods a hard prerequisite (RT#94923)
         - Fix t/08helper.t with Data::Dumper >= 2.151 (RT#94599)

@@ -3,7 +3,7 @@ package  # hide from PAUSE
 
 use MooseX::Types -declare => [qw/
     ConnectInfo ConnectInfos Replicants SchemaClass CreateOption
-    Schema
+    Schema LoadedClass
 /];
 
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
@@ -11,8 +11,20 @@ use MooseX::Types::Moose qw/ArrayRef HashRef CodeRef Str ClassName/;
 use MooseX::Types::LoadableClass qw/LoadableClass/;
 use Scalar::Util 'reftype';
 use List::MoreUtils 'all';
+use Module::Runtime;
 
 use namespace::clean -except => 'meta';
+
+# So I restored the custom Type LoadedClass because 'LoadableClass' doesn't really
+# exactly do the same thing, which busted the Replication trait.  Please don't
+# "clean this up" -JNAP
+
+subtype LoadedClass,
+    as ClassName;
+
+coerce LoadedClass,
+    from Str, # N.B. deliberate paranoia against $_ clobbering below
+    via { my $classname = $_; Module::Runtime::use_module($classname); $classname };
 
 subtype SchemaClass,
     as LoadableClass,

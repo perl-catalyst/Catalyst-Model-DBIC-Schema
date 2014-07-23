@@ -1,13 +1,18 @@
 package Catalyst::TraitFor::Model::DBIC::Schema::Replicated;
 
+## WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+## If you make changes to this code and don't actually go and test it
+## on a real replicated environment I will rip you an new hole.  The
+## test suite DOES NOT properly test this.  --JNAP
+
 use namespace::autoclean;
 use Moose::Role;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';
 
-use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfos LoadableClass/;
+use Catalyst::Model::DBIC::Schema::Types qw/ConnectInfos LoadedClass/;
 use MooseX::Types::Moose qw/Str HashRef/;
 
-use Module::Runtime qw/use_module/;
+use Module::Runtime;
 
 =head1 NAME
 
@@ -76,7 +81,10 @@ has replicants => (
     is => 'ro', isa => ConnectInfos, coerce => 1, required => 1
 );
 
-has pool_type => (is => 'ro', isa => LoadableClass);
+# If you change LoadedClass with LoadableClass I will rip you a new hole,
+# it doesn't work exactly the same - JNAP
+
+has pool_type => (is => 'ro', isa => LoadedClass);
 has pool_args => (is => 'ro', isa => HashRef);
 has balancer_type => (is => 'ro', isa => Str);
 has balancer_args => (is => 'ro', isa => HashRef);
@@ -90,7 +98,10 @@ after setup => sub {
             "DBIx::Class::Storage$storage_type"
             : $storage_type;
 
-        use_module($class);
+            # For some odd reason if you try to use 'use_module' as an export
+            # the code breaks.  I guess something odd about MR and all these
+            # runtime loaded crazy trait code.  Please don't "tidy the code up" -JNAP
+            Module::Runtime::use_module($class);
 
         croak "This storage_type cannot be used with replication"
             unless $class->isa('DBIx::Class::Storage::DBI::Replicated');
