@@ -5,7 +5,7 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.64';
+our $VERSION = '0.65';
 $VERSION = eval $VERSION;
 
 use namespace::autoclean;
@@ -306,6 +306,17 @@ Traits that come with the distribution:
 
 =back
 
+=head2 compose_namespaces
+
+This model calls L<DBIx::Class::Schema/compose_namespaces> by default to
+install classes into the model namespaces. You can turn that off by
+setting this attribute to false. Default is true.
+
+=head2 install_model_shortcuts
+
+If you don't want shortcut models so you can do e.g. C<< $c->model('DB::Book')
+>> set this attribute to false, Default is true.
+
 =head2 storage_type
 
 Allows the use of a different C<storage_type> than what is set in your
@@ -376,9 +387,12 @@ schema->resultset, schema->source, and schema->class.
 =head2 composed_schema
 
 Accessor which returns the composed schema, which has no connection info,
-which was used in constructing the C<schema> above.  Useful for creating
+which was used in constructing the L</schema>. Useful for creating
 new connections based on the same schema/model.  There are direct shortcuts
 from the model object for composed_schema->clone and composed_schema->connect
+
+If L</compose_namespaces> is not true, L</composed_schema> is equivalent to
+C<< $model->schema_class->clone >>.
 
 =head2 clone
 
@@ -421,6 +435,10 @@ has schema_class => (
     isa => SchemaClass,
     required => 1
 );
+
+has compose_namespaces => (is => 'ro', default => sub { 1 });
+
+has install_model_shortcuts => (is => 'ro', default => sub { 1 });
 
 has storage_type => (is => 'rw', isa => Str);
 
@@ -476,8 +494,13 @@ sub BUILD {
 
     my $is_installed = defined $self->composed_schema;
 
-    $self->composed_schema($schema_class->compose_namespace($class))
-        unless $is_installed;
+    if (not $is_installed) {
+        $self->composed_schema($self->compose_namespaces ?
+            $schema_class->compose_namespace($class)
+            :
+            $schema_class->clone
+        );
+    }
 
     $self->schema($self->composed_schema->clone)
         unless $self->schema;
@@ -487,7 +510,9 @@ sub BUILD {
 
     $self->schema->connection($self->connect_info);
 
-    $self->_install_rs_models unless $is_installed;
+    if ((not $is_installed) && $self->install_model_shortcuts) {
+        $self->_install_rs_models;
+    }
 }
 
 sub clone { shift->composed_schema->clone(@_); }
