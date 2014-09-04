@@ -17,7 +17,7 @@ use Module::Runtime qw/use_module/;
 use Catalyst::Model::DBIC::Schema::Types
     qw/ConnectInfo SchemaClass Schema/;
 
-use MooseX::Types::Moose qw/Str/;
+use MooseX::Types::Moose qw/Str Bool/;
 use MooseX::Types::LoadableClass qw/LoadableClass/;
 
 =head1 NAME
@@ -436,9 +436,9 @@ has schema_class => (
     required => 1
 );
 
-has compose_namespaces => (is => 'ro', default => sub { 1 });
+has compose_namespaces => (is => 'ro', isa => Bool, default => 1 );
 
-has install_model_shortcuts => (is => 'ro', default => sub { 1 });
+has install_model_shortcuts => (is => 'ro', isa => Bool, default => 1 );
 
 has storage_type => (is => 'rw', isa => Str);
 
