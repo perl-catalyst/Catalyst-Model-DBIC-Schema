@@ -308,7 +308,7 @@ Traits that come with the distribution:
 
 =head2 compose_namespaces
 
-This model calls L<DBIx::Class::Schema/compose_namespaces> by default to
+This model calls L<DBIx::Class::Schema/compose_namespace> by default to
 install classes into the model namespaces. You can turn that off by
 setting this attribute to false. Default is true.
 
