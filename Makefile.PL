@@ -54,6 +54,6 @@ auto_provides;
 auto_install;
 
 resources repository =>
-    'git://git.shadowcat.co.uk/catagits/Catalyst-Model-DBIC-Schema.git';
+    'https://github.com/perl-catalyst/Catalyst-Model-DBIC-Schema.git';
 
 WriteAll;
