@@ -5,7 +5,7 @@ use Class::C3; # This causes the fail, saying use MRO::Compat is fine..
 
 our $VERSION = '0.0001';
 
-use Catalyst::Runtime '5.70';
+use Catalyst::Runtime 5.70;
 use Catalyst;
 
 __PACKAGE__->config(
