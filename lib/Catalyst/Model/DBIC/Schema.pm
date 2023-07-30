@@ -5,8 +5,8 @@ use mro 'c3';
 extends 'Catalyst::Model';
 with 'CatalystX::Component::Traits';
 
-our $VERSION = '0.65';
-$VERSION = eval $VERSION;
+our $VERSION = '0.66';
+$VERSION =~ tr/_//d;
 
 use namespace::autoclean;
 use Carp::Clan '^Catalyst::Model::DBIC::Schema';

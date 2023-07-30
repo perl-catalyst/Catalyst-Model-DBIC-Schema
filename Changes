@@ -1,5 +1,6 @@
 Revision history for Perl extension Catalyst::Model::DBIC::Schema
 
+0.66  2023-07-30 07:45:00
         - fix Makefile.PL to work properly in newer perls without . in @INC
         - update repository link in metadata
         - fix version requirement in test module
