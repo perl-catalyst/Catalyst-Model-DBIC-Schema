@@ -1,7 +1,7 @@
 package Catalyst::TraitFor::Model::DBIC::Schema::PerRequestSchema;
 
 use Moose::Role;
-use MooseX::MarkAsMethods autoclean => 1;
+use namespace::autoclean;
 
 with 'Catalyst::Component::InstancePerContext';
 

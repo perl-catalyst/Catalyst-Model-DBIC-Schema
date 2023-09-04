@@ -9,12 +9,11 @@ requires 'DBIx::Class'           => '0.08114';
 requires 'Catalyst::Runtime'     => '5.80005';
 requires 'CatalystX::Component::Traits' => '0.14';
 
-requires 'Moose' => '1.12';
-requires 'MooseX::MarkAsMethods' => '0.13';
+requires 'Moose' => '2.14';
 requires 'MooseX::Types';
 requires 'MooseX::Types::LoadableClass' => 0.009;
 requires 'Module::Runtime' => '0.012';
-requires 'namespace::autoclean' => 0.09;
+requires 'namespace::autoclean' => 0.16;
 requires 'Carp::Clan';
 requires 'List::MoreUtils';
 requires 'Tie::IxHash';
